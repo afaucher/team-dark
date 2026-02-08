@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://char_viz_scene_uid"]
+
+[ext_resource type="Script" path="res://scripts/character_visualizer.gd" id="1_viz"]
+
+[node name="CharacterVisualizer" type="Node2D"]
+script = ExtResource("1_viz")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(2, 2)
+
+[node name="Container" type="Node2D" parent="."]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="CanvasLayer"]
+offset_right = 200.0
+offset_bottom = 100.0
+text = "Visualizer Loading..."

@@ -1,0 +1,53 @@
+[gd_scene load_steps=4 format=3 uid="uid://player_scene_uid"]
+
+[ext_resource type="Script" path="res://scenes/characters/player.gd" id="1_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 16.0
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_1"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:velocity")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+
+[node name="Player" type="CharacterBody2D" groups=["players"]]
+z_index = 10
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1_script")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_1")
+
+[node name="Sprite2D" type="Node2D" parent="."]
+# Placeholder for visual, script draws it? or use Icon
+# For now let's just use a Polygon2D or similar if we wanted, but Script does not have _draw yet.
+# Let's add a simple Polygon2D for visuals loop
+[node name="Visual" type="Polygon2D" parent="Sprite2D"]
+polygon = PackedVector2Array(-10, -10, 10, 0, -10, 10)
+color = Color(0, 0.6, 0.8, 1)
+
+[node name="MountLeft" type="Node2D" parent="."]
+position = Vector2(0, -20)
+
+[node name="MountRight" type="Node2D" parent="."]
+position = Vector2(20, 10)
+
+[node name="MountTop" type="Node2D" parent="."]
+position = Vector2(-20, 10)
+# Note: Positions are arbitrary, just splitting them
+
+
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.8, 0.8)
+position_smoothing_enabled = true

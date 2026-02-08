@@ -1,0 +1,16 @@
+[gd_scene load_steps=7 format=3 uid="uid://game_scene_uid"]
+
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_manager"]
+[ext_resource type="PackedScene" uid="uid://map_scene_uid" path="res://scenes/map/map.tscn" id="2_map"]
+[ext_resource type="PackedScene" uid="uid://player_scene_uid" path="res://scenes/characters/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" uid="uid://enemy_spawner_scene_uid" path="res://scenes/characters/enemy_spawner.tscn" id="4_spawner"]
+[ext_resource type="PackedScene" uid="uid://main_menu_scene_uid" path="res://scenes/ui/main_menu.tscn" id="5_menu"]
+[ext_resource type="PackedScene" uid="uid://hud_scene_uid" path="res://scenes/ui/hud.tscn" id="6_hud"]
+
+[node name="Game" type="Node"]
+script = ExtResource("1_manager")
+map_generator_scene = ExtResource("2_map")
+player_scene = ExtResource("3_player")
+enemy_spawner_scene = ExtResource("4_spawner")
+main_menu_scene = ExtResource("5_menu")
+hud_scene = ExtResource("6_hud")
