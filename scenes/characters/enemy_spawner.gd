@@ -31,12 +31,12 @@ func spawn_enemies(hex_map: Dictionary):
 	# 2. Spawn Solo (Heavies)
 	for i in range(solo_count):
 		var pos = _get_random_flat_pos(hex_map, hex_keys)
-		_spawn_enemy(pos, Enemy.Tier.HEAVY, round_color, enemies_node)
+		_spawn_enemy(pos, 2, round_color, enemies_node) # 2 = HEAVY
 
 	# 3. Spawn Basic (Gray/Easy) everywhere else
 	for i in range(20):
 		var pos = _get_random_flat_pos(hex_map, hex_keys)
-		_spawn_enemy(pos, Enemy.Tier.EASY, Color.GRAY, enemies_node)
+		_spawn_enemy(pos, 0, Color.GRAY, enemies_node) # 0 = EASY
 
 func _get_random_flat_pos(hex_map, keys) -> Vector2:
 	# Try a few times to find a "safe" reachable spot? 
@@ -48,9 +48,9 @@ func _spawn_cluster(center: Vector2, color: Color, parent: Node):
 	var size = rng.randi_range(3, 5)
 	for i in range(size):
 		var offset = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)).normalized() * rng.randf_range(20, 100)
-		_spawn_enemy(center + offset, Enemy.Tier.SCOUT, color, parent)
+		_spawn_enemy(center + offset, 1, color, parent) # 1 = SCOUT
 
-func _spawn_enemy(pos: Vector2, tier: Enemy.Tier, color: Color, parent: Node):
+func _spawn_enemy(pos: Vector2, tier: int, color: Color, parent: Node):
 	if not enemy_scene: return
 	var enemy = enemy_scene.instantiate()
 	enemy.global_position = pos

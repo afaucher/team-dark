@@ -227,13 +227,12 @@ func _handle_pickup_timers(delta):
 	var actions = ["fire_left", "fire_right", "fire_front"]
 	
 	for i in range(3):
-		if Input.is_action_pressed(actions[i]):
+		if Input.is_action_pressed(actions[i]) and nearest_pickup:
 			mount_hold_times[i] += delta
 			if mount_hold_times[i] >= PICKUP_HOLD_DURATION:
-				if nearest_pickup:
-					_request_pickup(nearest_pickup.get_path(), i)
-					mount_hold_times[i] = -1.0 # Prevent multiple triggers
-		else:
+				_request_pickup(nearest_pickup.get_path(), i)
+				mount_hold_times[i] = -1.0 # Prevent multiple triggers
+		elif !Input.is_action_pressed(actions[i]):
 			mount_hold_times[i] = 0.0
 
 func _request_pickup(pickup_path: NodePath, mount_index: int):
@@ -287,6 +286,7 @@ func _fire_mount(index: int, just_pressed: bool, held: bool):
 
 func _input(event):
 	if is_dead: return
+
 	if event.is_action_pressed("toggle_debug"):
 		queue_redraw()
 

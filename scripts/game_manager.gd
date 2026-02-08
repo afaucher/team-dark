@@ -10,6 +10,7 @@ extends Node
 var current_map = null
 var current_seed: int = 0
 var players_container = null
+var hud_instance = null
 
 const MAX_GEMS: int = 3
 var collected_gems: int = 0
@@ -20,13 +21,34 @@ func _ready():
 	if spawner:
 		spawner.add_spawnable_scene("res://scenes/projectiles/pellet.tscn")
 	
-	# Start with Main Menu
-	_show_main_menu()
-	
 	NetworkManager.player_connected.connect(_on_player_connected)
 	NetworkManager.server_disconnected.connect(_on_server_disconnected)
-	# Listen for connection success to request game state if needed?
-	# For now, Server pushes state.
+	
+	# Start check: If we came from the Steam Server Browser, a peer is already active.
+	if multiplayer.multiplayer_peer and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
+		_setup_steam_session()
+	else:
+		_show_main_menu()
+
+func _setup_steam_session():
+	print("[Game] Steam session detected, skipping internal menu.")
+	var my_name = SteamManager.steam_username
+	if my_name == "": my_name = "Player " + str(multiplayer.get_unique_id())
+	
+	NetworkManager.is_host = multiplayer.is_server()
+	# Register self locally
+	NetworkManager.players[multiplayer.get_unique_id()] = {"name": my_name, "id": multiplayer.get_unique_id()}
+	NetworkManager.player_connected.emit(multiplayer.get_unique_id(), NetworkManager.players[multiplayer.get_unique_id()])
+	
+	if NetworkManager.is_host:
+		print("[Game] Steam Host starting game...")
+		# Wait a frame to ensure all nodes are ready
+		await get_tree().process_frame
+		start_game()
+	else:
+		print("[Game] Steam Client registering with host...")
+		# Clients need to tell the server their name
+		NetworkManager.register_player.rpc_id(1, my_name)
 
 func _input(event):
 	if event.is_action_pressed("quit_game"):
@@ -55,9 +77,13 @@ func _load_map(seed_val: int):
 	print("Loading map with seed: ", seed_val)
 	current_seed = seed_val
 	
-	# Cleanup menu
+	# Cleanup menu and HUD
+	if hud_instance:
+		hud_instance.queue_free()
+		hud_instance = null
+		
 	for child in get_children():
-		if child is Control: # Assuming Menu/HUD are Controls
+		if child is Control: # Assuming Menu are Controls
 			child.queue_free()
 	
 	# Instantiate Map
@@ -95,8 +121,8 @@ func _load_map(seed_val: int):
 			
 	# Add HUD
 	if hud_scene:
-		var hud = hud_scene.instantiate()
-		add_child(hud)
+		hud_instance = hud_scene.instantiate()
+		add_child(hud_instance)
 
 func _on_player_connected(id, info):
 	if multiplayer.is_server():
@@ -177,6 +203,9 @@ func _sync_gem_count(count: int):
 	collected_gems = count
 	print("Gems Collected: ", count, "/", MAX_GEMS)
 	
+	if hud_instance and hud_instance.has_method("update_gems"):
+		hud_instance.update_gems(collected_gems, MAX_GEMS)
+	
 @rpc("authority", "call_local", "reliable")
 func trigger_win(player_id: int):
 	# Could be authority or any peer notifying?
@@ -186,16 +215,14 @@ func trigger_win(player_id: int):
 	print("WIN CONDITION MET by Player ", player_id)
 	
 	# Show Win Screen / Menu
-	var hud = get_tree().root.find_child("HUD", true, false)
-	if hud:
+	if hud_instance:
 		var label = Label.new()
 		label.text = "VICTORY!\nPlayer " + str(player_id) + " Extracted!"
 		label.add_theme_font_size_override("font_size", 64)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.anchors_preset = Control.PRESET_CENTER
 		label.set_anchors_preset(Control.PRESET_CENTER)
-		hud.add_child(label)
+		hud_instance.add_child(label)
 	
 	# After delay, restart?
 	await get_tree().create_timer(5.0).timeout

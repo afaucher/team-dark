@@ -24,14 +24,12 @@ func _ready() -> void:
 	_initialize_steam()
 
 func _initialize_steam() -> void:
-	var init: Dictionary = Steam.steamInit()
-	print("[Steam] Status: " + str(init))
+	var init = Steam.steamInit()
+	printerr("[Steam] Status: " + str(init))
 
-	if init['status'] != 1:
-		print("[Steam] Failed to initialize: " + str(init['verbal']))
-		# Don't quit in editor, just warn
-		if not OS.has_feature("editor"):
-			get_tree().quit()
+	if init != true:
+		printerr("[Steam] Failed to initialize!")
+		# Don't quit, allows offline dev
 		return
 
 	is_online = Steam.loggedOn()
@@ -64,16 +62,29 @@ func _check_command_line() -> void:
 # --- Lobby Functions ---
 
 func create_lobby() -> void:
+	if steam_id == 0:
+		printerr("[Steam] Cannot create lobby: Steam not initialized")
+		return
+		
 	if lobby_id == 0:
+		print("[Steam] Creating lobby...")
 		Steam.createLobby(Steam.LOBBY_TYPE_PUBLIC, lobby_max_members)
 
 func list_lobbies() -> void:
+	if steam_id == 0:
+		printerr("[Steam] Cannot list lobbies: Steam not initialized")
+		return
+		
 	print("[Steam] Requesting lobby list...")
 	Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
 	Steam.addRequestLobbyListStringFilter("game", "team_dark", Steam.LOBBY_COMPARISON_EQUAL)
 	Steam.requestLobbyList()
 
 func join_lobby(id: int) -> void:
+	if steam_id == 0:
+		printerr("[Steam] Cannot join lobby: Steam not initialized")
+		return
+		
 	print("[Steam] Joining lobby: " + str(id))
 	Steam.joinLobby(id)
 
@@ -82,7 +93,12 @@ func leave_lobby() -> void:
 		Steam.leaveLobby(lobby_id)
 		lobby_id = 0
 		lobby_members.clear()
-		# Close P2P session
+		close_connection()
+
+func close_connection() -> void:
+	if multiplayer.multiplayer_peer:
+		multiplayer.multiplayer_peer.close()
+		multiplayer.multiplayer_peer = null
 
 # --- Callbacks ---
 
@@ -95,10 +111,9 @@ func _on_lobby_created(connect: int, id: int) -> void:
 		Steam.setLobbyData(lobby_id, "name", str(steam_username) + "'s Lobby")
 		Steam.setLobbyData(lobby_id, "game", "team_dark")
 		
-		allow_p2p()
 		emit_signal("lobby_created", connect, id)
 	else:
-		print("[Steam] Failed to create lobby: " + str(connect))
+		printerr("[Steam] Failed to create lobby: " + str(connect))
 
 func _on_lobby_match_list(lobbies: Array) -> void:
 	print("[Steam] Found " + str(lobbies.size()) + " lobbies")
@@ -109,9 +124,19 @@ func _on_lobby_joined(id: int, permissions: int, locked: bool, response: int) ->
 	if response == 1:
 		lobby_id = id
 		print("[Steam] Joined Lobby: " + str(lobby_id))
+		
+		# Host or Client, we now set up the peer
+		setup_steam_peer()
+		
 		emit_signal("lobby_joined", id, steam_id)
 	else:
-		print("[Steam] Failed to join lobby: " + str(response))
+		var error = "Unknown"
+		match response:
+			2: error = "Full"
+			3: error = "No longer exists"
+			4: error = "No connection"
+			5: error = "Access denied"
+		printerr("[Steam] Failed to join lobby: ", error, " (", response, ")")
 
 func _on_lobby_chat_update(id: int, changed_id: int, making_change_id: int, chat_state: int) -> void:
 	# Handle user join/leave
@@ -126,6 +151,18 @@ func _on_lobby_chat_update(id: int, changed_id: int, making_change_id: int, chat
 func _on_join_requested(id: int, friend_id: int) -> void:
 	join_lobby(id)
 
-func allow_p2p() -> void:
-	# Configure MultiplayerPeer in Godot 4
-	pass
+func setup_steam_peer() -> void:
+	print("[Steam] Setting up SteamMultiplayerPeer...")
+	var peer = SteamMultiplayerPeer.new()
+	
+	# Check if we are the host of the lobby
+	var owner_id = Steam.getLobbyOwner(lobby_id)
+	if owner_id == steam_id:
+		print("[Steam] Starting as Host")
+		peer.create_host(0)
+	else:
+		print("[Steam] Starting as Client, connecting to ", owner_id)
+		peer.create_client(owner_id, 0)
+		
+	multiplayer.multiplayer_peer = peer
+	print("[Steam] MultiplayerPeer set.")

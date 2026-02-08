@@ -1,22 +1,35 @@
-$godotPath = "C:\Users\alexa\Downloads\Godot_v4.6-stable_win64.exe\Godot_v4.6-stable_win64.exe"
-$projectPath = "$PSScriptRoot\project.godot"
+$godotPath = "$PSScriptRoot\external\Godot_v4.4.1-stable_win64.exe"
 
 if (-not (Test-Path $godotPath)) {
     Write-Error "Godot executable not found at $godotPath"
     exit 1
 }
 
-# Cleanup previous instances
-Get-Process "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Sleep -Seconds 1
+if ($args -contains "--multi") {
+    Write-Host "Starting multi-instance mode..."
+}
+else {
+    Get-Process "Godot*" -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*external*" } | Stop-Process -Force
+    Start-Sleep -Seconds 1
+}
 
-# Run the project. The main scene is defined in project.godot, but we can be explicit.
-# Passing --path to ensure it uses the script's directory as project root.
-# Launch the game and wait, redirecting output to a timestamped log file
-$logFile = "game_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
-& $godotPath --path $PSScriptRoot "scenes/game.tscn" 2>&1 | Tee-Object -FilePath $logFile
+$logDir = "$PSScriptRoot\logs"
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+}
 
-Write-Host "Game exited. Log saved to $logFile"
+$timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+$logFile = "$logDir\game_$timestamp.log"
+$errorFile = "$logDir\error_$timestamp.log"
 
-Write-Host "Game exited."
-# Read-Host "Press Enter to close..."
+Write-Host "Launching Game..."
+
+if ($args -contains "--multi") {
+    # In multi mode, use Start-Process with distinct files to avoid the conflict
+    Start-Process -FilePath $godotPath -ArgumentList "--path $PSScriptRoot" -RedirectStandardOutput $logFile -RedirectStandardError $errorFile
+    Write-Host "Game launched in background. Log: $logFile"
+}
+else {
+    # In single mode, use Tee-Object to show in console too
+    & $godotPath --path $PSScriptRoot 2>&1 | Tee-Object -FilePath $logFile
+}

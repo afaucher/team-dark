@@ -17,6 +17,7 @@ Thumbs.db
 
 # Log files
 *.log
+logs/
 
 # Screenshots and automated captures
 screenshots/
@@ -27,3 +28,12 @@ build/
 
 # Temp files
 godot_help.txt
+godotsteam_temp/
+temp_extraction/
+temp_*.zip
+steam_app_id.txt
+steam_appid.txt
+
+# External Tools and Dependencies
+external/
+addons/godotsteam/
