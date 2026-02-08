@@ -190,7 +190,7 @@ func trigger_win(player_id: int):
 	if hud:
 		var label = Label.new()
 		label.text = "VICTORY!\nPlayer " + str(player_id) + " Extracted!"
-		label.theme_override_font_sizes/font_size = 64
+		label.add_theme_font_size_override("font_size", 64)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.anchors_preset = Control.PRESET_CENTER
