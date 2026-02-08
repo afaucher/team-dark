@@ -42,30 +42,39 @@ func _draw():
 	var pulse = 1.0 + sin(Time.get_ticks_msec() * 0.005) * 0.1
 	var current_radius = radius * pulse
 	
-	# Glow
-	draw_circle(Vector2.ZERO, current_radius + 4, color * Color(1,1,1,0.2))
+	# Glow backing
+	draw_circle(Vector2.ZERO, current_radius + 6, color * Color(1, 1, 1, 0.2))
 	
 	# Outer Ring
-	draw_arc(Vector2.ZERO, current_radius, 0, TAU, 32, color, 3.0, true)
+	draw_arc(Vector2.ZERO, current_radius, 0, TAU, 32, color, 4.0, true)
 	
-	# Inner Fill (Black)
-	draw_circle(Vector2.ZERO, inner_radius, Color.BLACK)
+	# Inner Fill (Black center)
+	draw_circle(Vector2.ZERO, radius * 0.5, Color.BLACK)
 	
-	# Type Icon (Simplified)
+	# Type Icon
+	var icon_color = color
 	match pickup_type:
 		"weapon":
-			draw_rect(Rect2(-5, -2, 10, 4), color)
-			draw_rect(Rect2(2, -4, 4, 8), color)
+			draw_rect(Rect2(-8, -3, 16, 6), icon_color)
+			draw_rect(Rect2(2, -6, 6, 12), icon_color)
 		"health":
-			draw_rect(Rect2(-2, -6, 4, 12), color)
-			draw_rect(Rect2(-6, -2, 12, 4), color)
+			draw_rect(Rect2(-3, -9, 6, 18), icon_color)
+			draw_rect(Rect2(-9, -3, 18, 6), icon_color)
 		"ammo":
-			draw_circle(Vector2(0, 0), 4, color)
-		"gem":
-			var points = PackedVector2Array([
-				Vector2(0, -8), Vector2(6, 0), Vector2(0, 8), Vector2(-6, 0)
-			])
-			draw_colored_polygon(points, color)
+			draw_circle(Vector2(0, 0), 6, icon_color)
+			
+	# Proximity Label
+	var players = get_tree().get_nodes_in_group("players")
+	var show_label = false
+	for p in players:
+		if p.global_position.distance_to(global_position) < 300.0:
+			show_label = true
+			break
+			
+	if show_label:
+		var label_color = Color.WHITE
+		label_color.a = 0.8
+		draw_string(ThemeDB.fallback_font, Vector2(-60, -radius - 15), pickup_name, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, label_color)
 
 func _process(_delta):
 	if color == Color.WHITE:

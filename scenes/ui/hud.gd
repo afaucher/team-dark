@@ -71,8 +71,25 @@ func update_mount(mount_idx: int, item_name: String, status: String):
 			match item_name.to_lower():
 				"pellet gun":
 					icon.type = 1 # PELLET_GUN
+				"machine gun":
+					icon.type = 2 # MACHINE_GUN
+				"health kit":
+					icon.type = 3 # HEALTH_KIT
 				_:
 					icon.type = 0 # NONE
+
+func update_weapon_status(mount_idx: int, is_ready: bool, ammo_ratio: float):
+	var container
+	match mount_idx:
+		0: container = mount_left_icon_container
+		1: container = mount_right_icon_container
+		2: container = mount_top_icon_container
+	
+	if container:
+		var icon = container.get_node_or_null("WeaponIcon")
+		if icon:
+			icon.is_ready = is_ready
+			icon.ammo_ratio = ammo_ratio
 
 func update_teammates(players: Dictionary):
 	# Clear list

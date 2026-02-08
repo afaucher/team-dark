@@ -2,6 +2,13 @@
 
 A twin-stick shooter with drop-in multiplayer, procedural hex maps, and modular mount points.
 
+## Prerequisites
+
+To build the game (using `./release.ps1`), you must have **Export Templates** installed for your Godot version:
+1. Open the project in the Godot Editor.
+2. Go to **Editor -> Manage Export Templates**.
+3. Click **Download and Install**.
+
 ## How to Run
 
 ### Client
@@ -16,7 +23,7 @@ To run a dedicated server:
 1.  Export the project for your platform (Linux/Windows).
 2.  Run the exported executable with the `--server` flag:
     ```bash
-    ./TeamDark.x86_64 --server
+    ./TeamDark.exe --server
     ```
     Or run from the editor:
     ```bash
@@ -30,19 +37,26 @@ To run a dedicated server:
 | :--- | :--- | :--- |
 | Move | WASD | Left Stick |
 | Aim | Arrows | Right Stick |
-| Fire Left | Q | L1 / LB |
-| Fire Right | E | R1 / RB |
-| Fire Top | Space | A / Cross |
-| Swap Weapon | Hold Fire Key | Hold Fire Button |
+| Fire Left | Q | **L2 / LT (Trigger)** |
+| Fire Right | E | **R2 / RT (Trigger)** |
+| Fire Front | Space | A / Cross |
+| Toggle Debug | F3 | - |
+| Quit | Esc | - |
 
 ## CLI Commands
 
-We provide PowerShell scripts for easy development and validation:
+We provide PowerShell scripts for a streamlined development workflow:
 
-### Run Game
-Launches the game using the local Godot executable.
+### Quick Play (Unified)
+Kills existing processes and launches both a **Dedicated Server** and a **Client** instance simultaneously.
 ```powershell
-./run_game.ps1
+./run.ps1
+```
+
+### Build & Release
+Packages the game into a Windows executable and a ZIP archive in the `build/` directory.
+```powershell
+./release.ps1
 ```
 
 ### Validate Scripts
@@ -51,8 +65,8 @@ Checks all `.gd` scripts for syntax errors using Godot's headless mode.
 ./validate.ps1
 ```
 
-### Run Server
-Starts a dedicated server instance.
+### Dedicated Server
+Starts only a dedicated server instance.
 ```powershell
 ./run_server.ps1
 ```
@@ -62,4 +76,9 @@ Automatically captures a screenshot of a generated map for visual verification.
 ```powershell
 ./run_visual_test.ps1
 ```
-Screenshots are saved to the `screenshots/` directory in the project root (or `%APPDATA%/Godot/app_userdata/Team Dark/screenshots` if run from editor).
+Screenshots are saved to `docs/screenshots/`.
+
+## Deployment
+1. Run `./release.ps1`.
+2. Find the packaged ZIP in `./build/TeamDark_Windows.zip`.
+3. Distribute the ZIP to players.

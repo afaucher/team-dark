@@ -163,14 +163,5 @@ func _draw_hex(hex):
 		else:
 			draw_line(p1, p2, faded_color, outline_width)
 			
-		if show_debug:
-			var mid = (p1 + p2) / 2.0
-			var to_mid = (mid - center).normalized()
-			var text_pos = mid + to_mid * 20.0
-			draw_string(ThemeDB.fallback_font, text_pos, "N:" + str(n_idx), HORIZONTAL_ALIGNMENT_CENTER, -1, 16, Color.YELLOW)
-			draw_line(mid, mid + to_mid * 30.0, Color.YELLOW, 1.0)
-	
 	if show_debug:
-		draw_string(ThemeDB.fallback_font, center, str(hex.q) + "," + str(hex.r) + "\nH:" + str(hex.height), HORIZONTAL_ALIGNMENT_CENTER, -1, 24, Color.WHITE)
-		for i in range(6):
-			draw_string(ThemeDB.fallback_font, points[i], str(i), HORIZONTAL_ALIGNMENT_CENTER, -1, 16, Color.RED)
+		draw_string(ThemeDB.fallback_font, center, "H:" + str(hex.height), HORIZONTAL_ALIGNMENT_CENTER, -1, 20, Color.WHITE)

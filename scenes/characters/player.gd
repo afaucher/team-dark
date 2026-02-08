@@ -96,6 +96,8 @@ func equip_weapon(mount_index: int, weapon_path: String = ""):
 		var hud = get_tree().root.find_child("HUD", true, false)
 		if hud:
 			hud.update_mount(mount_index, w_name, status)
+			if hud.has_method("update_weapon_status"):
+				hud.update_weapon_status(mount_index, true, 1.0)
 	
 	queue_redraw()
 
@@ -124,6 +126,32 @@ func drop_weapon(mount_index: int):
 	
 	# Clear the mount
 	equip_weapon.rpc(mount_index, "")
+
+func swap_weapon(mount_index: int, new_weapon_path: String):
+	if not multiplayer.is_server():
+		return
+		
+	# 1. Drop the current weapon if it exists
+	var old_weapon_scene = current_mount_weapons[mount_index]
+	if old_weapon_scene:
+		var pickup_pkg = load("res://scenes/objects/pickup.tscn")
+		var pickup = pickup_pkg.instantiate()
+		pickup.pickup_type = "weapon"
+		pickup.item_scene = old_weapon_scene
+		pickup.item_scene_path = old_weapon_scene.resource_path
+		
+		# Get name
+		var temp = old_weapon_scene.instantiate()
+		pickup.pickup_name = temp.weapon_name if "weapon_name" in temp else "Dropped Weapon"
+		temp.free()
+		
+		# Spawn behind the player
+		pickup.global_position = global_position - Vector2.from_angle(rotation) * 60.0
+		get_tree().current_scene.find_child("Pickups", true, false).add_child(pickup, true)
+		print("[Server] Player ", player_id, " dropped ", pickup.pickup_name)
+	
+	# 2. Equip the new weapon
+	equip_weapon.rpc(mount_index, new_weapon_path)
 
 func heal(amount: float):
 	current_hp = min(current_hp + amount, max_hp)
@@ -177,6 +205,15 @@ func _handle_input(delta):
 	var fire_all_held = Input.is_action_pressed("fire_all")
 	if fire_all_just or fire_all_held:
 		for i in range(3):
+			# Skip passive items for "Fire All"
+			var weapon = current_mount_weapons[i]
+			if weapon:
+				var temp = weapon.instantiate()
+				var is_passive = "is_passive" in temp and temp.is_passive
+				temp.free()
+				if is_passive:
+					continue
+					
 			_fire_mount(i, fire_all_just, fire_all_held)
 
 	# Update Pickup Hold timers
@@ -206,7 +243,17 @@ func _srv_pickup(pickup_path: NodePath, mount_index: int):
 	
 	var pickup = get_node_or_null(pickup_path)
 	if pickup and pickup.has_method("pickup_collected"):
-		pickup.pickup_collected(player_id, mount_index)
+		if pickup.pickup_type == "weapon" and pickup.item_scene_path != "":
+			swap_weapon(mount_index, pickup.item_scene_path)
+			pickup.queue_free()
+		elif pickup.pickup_type == "health":
+			# New: Health kits can now be mounted!
+			# We'll use a special scene for the mounted health kit
+			swap_weapon(mount_index, "res://scenes/objects/health_kit_mounted.tscn")
+			pickup.queue_free()
+		else:
+			# Regular pickup (ammo, etc)
+			pickup.pickup_collected(player_id, mount_index)
 
 func _update_nearest_pickup():
 	var pickups = get_tree().get_nodes_in_group("pickups")
@@ -298,8 +345,6 @@ func _draw():
 			
 			var mount_pos = mounts[i].position
 			draw_arc(mount_pos, 15.0, -PI/2, -PI/2 + visual_progress * TAU, 32, Color.WHITE, 2.0)
-			if nearest_pickup:
-				draw_line(mount_pos, to_local(nearest_pickup.global_position), Color(1,1,1,0.5 * visual_progress), 1.0)
 
 	# --- Debug Overlay (Toggle with F3) ---
 	if DebugManager.show_debug:
@@ -384,6 +429,12 @@ func _process(delta):
 	if is_multiplayer_authority():
 		_check_pointing_at_others(delta)
 		_update_nearest_pickup()
+		
+		if DebugManager.show_debug and Input.is_action_just_pressed("toggle_debug"):
+			var p_count = get_tree().get_nodes_in_group("pickups").size()
+			print("[DEBUG] Current pickups in world: ", p_count)
+			if nearest_pickup:
+				print("[DEBUG] Nearest pickup: ", nearest_pickup.pickup_name, " at dist ", global_position.distance_to(nearest_pickup.global_position))
 		
 	queue_redraw() # Continuous redraw for debug inputs
 

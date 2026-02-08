@@ -14,6 +14,7 @@ func _ready():
 	_timer.timeout.connect(_on_timer_timeout)
 	add_child(_timer)
 	queue_redraw()
+	_update_hud_status()
 
 func _draw():
 	# Neon Vector Weapon Style
@@ -37,7 +38,8 @@ func _draw():
 	# Outline
 	draw_polyline(points, color, 2.0)
 	# High-intensity tip
-	draw_circle(Vector2(barrel_length, 0), 2.0, Color.WHITE)
+	if can_fire:
+		draw_circle(Vector2(barrel_length, 0), 2.0, Color.WHITE)
 
 
 func trigger(just_pressed: bool, is_held: bool):
@@ -46,6 +48,7 @@ func trigger(just_pressed: bool, is_held: bool):
 		shoot()
 		can_fire = false
 		_timer.start()
+		_update_hud_status()
 
 func get_attacker_id() -> int:
 	var parent = get_parent() # Mount
@@ -84,3 +87,21 @@ func _spawn_projectile():
 
 func _on_timer_timeout():
 	can_fire = true
+	_update_hud_status()
+	queue_redraw()
+
+func _update_hud_status():
+	var parent = get_parent() # Mount
+	if parent:
+		var player = parent.get_parent() # Player
+		if player and player.is_multiplayer_authority():
+			var idx = -1
+			if "mounts" in player:
+				for i in range(player.mounts.size()):
+					if player.mounts[i] == parent:
+						idx = i
+						break
+			if idx != -1:
+				var hud = get_tree().root.find_child("HUD", true, false)
+				if hud and hud.has_method("update_weapon_status"):
+					hud.update_weapon_status(idx, can_fire, 1.0)

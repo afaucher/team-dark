@@ -7,5 +7,5 @@
 [node name="PickupSpawner" type="Node"]
 script = ExtResource("1_script")
 weapon_scenes = Array[PackedScene]([ExtResource("2_pellet_gun"), ExtResource("3_machine_gun")])
-health_count = 15
-weapon_count = 15
+health_count = 30
+weapon_count = 30

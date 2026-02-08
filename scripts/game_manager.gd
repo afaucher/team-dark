@@ -44,6 +44,7 @@ func start_game():
 	if not players_container:
 		players_container = Node2D.new()
 		players_container.name = "Players"
+		players_container.z_index = 10
 		add_child(players_container)
 
 @rpc("authority", "call_local", "reliable")
@@ -60,6 +61,9 @@ func _load_map(seed_val: int):
 	if map_generator_scene:
 		var map_gen = map_generator_scene.instantiate()
 		add_child(map_gen)
+		move_child(map_gen, 0) # Place at the very bottom of the tree
+		if map_gen is Node2D:
+			map_gen.z_index = -10 # Ensure it's visually below everything
 		current_map = map_gen
 		# Access the internal generator node to set seed
 		# Map scene structure: Map (Renderer) -> Generator (Node)
@@ -111,6 +115,9 @@ func _on_player_connected(id, info):
 		else:
 			start_game()
 			_spawn_player.rpc(id, info, spawn_pos)
+		
+		# TEST: Spawn a machine gun near the new player
+		call_deferred("_spawn_test_pickup", spawn_pos + Vector2(250, 0))
 
 @rpc("authority", "call_local", "reliable")
 func _spawn_player(id, info, spawn_pos: Vector2):
@@ -118,6 +125,7 @@ func _spawn_player(id, info, spawn_pos: Vector2):
 	if not players_container:
 		players_container = Node2D.new()
 		players_container.name = "Players"
+		players_container.z_index = 10
 		add_child(players_container)
 		
 	if players_container.has_node(str(id)):
@@ -139,3 +147,17 @@ func _on_server_disconnected():
 		players_container = null
 	
 	_show_main_menu()
+
+func _spawn_test_pickup(pos: Vector2):
+	if not multiplayer.is_server(): return
+	var pickups_node = find_child("Pickups", true, false)
+	if not pickups_node: return
+	
+	var pickup_pkg = load("res://scenes/objects/pickup.tscn")
+	var pickup = pickup_pkg.instantiate()
+	pickup.pickup_type = "weapon"
+	pickup.pickup_name = "TEST Machine Gun"
+	pickup.item_scene_path = "res://scenes/weapons/machine_gun.tscn"
+	pickup.global_position = pos
+	pickups_node.add_child(pickup, true)
+	print("[TEST] Spawned pickup at ", pos)
