@@ -18,5 +18,9 @@ Thumbs.db
 # Log files
 *.log
 
+# Screenshots and automated captures
+screenshots/
+**/screenshots/
+
 # Build output
 build/
