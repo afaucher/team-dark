@@ -1,11 +1,19 @@
-[gd_scene load_steps=4 format=3 uid="uid://pickup_spawner_scene_uid"]
+[gd_scene load_steps=8 format=3 uid="uid://pickup_spawner_scene_uid"]
 
 [ext_resource type="Script" path="res://scripts/pickups/pickup_spawner.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://pellet_gun_scene" path="res://scenes/weapons/pellet_gun.tscn" id="2_pellet_gun"]
 [ext_resource type="PackedScene" uid="uid://machine_gun_scene" path="res://scenes/weapons/machine_gun.tscn" id="3_machine_gun"]
+[ext_resource type="PackedScene" uid="uid://shotgun_scene" path="res://scenes/weapons/shotgun.tscn" id="4_shotgun"]
+[ext_resource type="PackedScene" uid="uid://grenade_launcher_scene" path="res://scenes/weapons/grenade_launcher.tscn" id="5_grenade_launcher"]
+[ext_resource type="PackedScene" uid="uid://shield_scene" path="res://scenes/utility/shield.tscn" id="6_shield"]
+[ext_resource type="PackedScene" uid="uid://jump_pack_scene" path="res://scenes/utility/jump_pack.tscn" id="7_jump_pack"]
+[ext_resource type="PackedScene" uid="uid://extraction_point_scene" path="res://scenes/objects/extraction_point.tscn" id="8_extraction"]
 
 [node name="PickupSpawner" type="Node"]
 script = ExtResource("1_script")
-weapon_scenes = Array[PackedScene]([ExtResource("2_pellet_gun"), ExtResource("3_machine_gun")])
-health_count = 30
-weapon_count = 30
+weapon_scenes = Array[PackedScene]([ExtResource("2_pellet_gun"), ExtResource("3_machine_gun"), ExtResource("4_shotgun"), ExtResource("5_grenade_launcher")])
+utility_scenes = Array[PackedScene]([ExtResource("6_shield"), ExtResource("7_jump_pack")])
+extraction_scene = ExtResource("8_extraction")
+health_count = 15
+weapon_count = 15
+utility_count = 10

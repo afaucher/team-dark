@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://shotgun_scene"]
+
+[ext_resource type="Script" path="res://scripts/weapons/shotgun.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://pellet_projectile_scene" path="res://scenes/projectiles/pellet.tscn" id="2_pellet"]
+
+[node name="Shotgun" type="Node2D"]
+script = ExtResource("1_script")
+projectile_scene = ExtResource("2_pellet")
+fire_rate = 0.8
+pellet_count = 8
+spread_degrees = 20.0

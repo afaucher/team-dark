@@ -1,12 +1,12 @@
 # release.ps1 - Build and package Team Dark for release
-$godotPath = "C:\Users\alexa\Downloads\Godot_v4.6-stable_win64.exe\Godot_v4.6-stable_win64.exe"
+$godotPath = "$PSScriptRoot\external\Godot_v4.4.1-stable_win64.exe"
 $buildDir = "$PSScriptRoot\build"
 $windowsBuildDir = "$buildDir\windows"
 $exportPath = "$windowsBuildDir\TeamDark.exe"
 
 # 1. Verification
 if (-not (Test-Path $godotPath)) {
-    Write-Error "Godot executable not found at $godotPath"
+    Write-Error "Godot executable not found at $godotPath. Please run setup.ps1 first."
     exit 1
 }
 
@@ -21,14 +21,29 @@ New-Item -ItemType Directory -Force -Path $windowsBuildDir | Out-Null
 # 3. Export Windows Desktop Build
 Write-Host "Exporting Windows Desktop build to $exportPath..." -ForegroundColor Cyan
 
-# Manually construct argument string for Start-Process to ensure correct quoting
-# We escape inner quotes with backticks to verify they are passed literally to the executable
+# We use --headless to avoid opening a window
 $godotArgs = "--path `"$PSScriptRoot`" --headless --export-release `"Windows Desktop`" `"$exportPath`""
 
 # Run Godot export
 $process = Start-Process -FilePath $godotPath -ArgumentList $godotArgs -Wait -PassThru -NoNewWindow
 
-# Check if export succeeded
+# 4. Copy Steam Dependencies
+Write-Host "Copying Steam dependencies..." -ForegroundColor Cyan
+$steamDll = "$PSScriptRoot\external\steam_api64.dll"
+$steamAppId = "$PSScriptRoot\steam_appid.txt"
+
+if (Test-Path $steamDll) {
+    Copy-Item $steamDll -Destination $windowsBuildDir
+}
+else {
+    Write-Warning "steam_api64.dll not found in external/! Building without it may fail."
+}
+
+if (Test-Path $steamAppId) {
+    Copy-Item $steamAppId -Destination $windowsBuildDir
+}
+
+# 5. Check if export succeeded
 if ($process.ExitCode -ne 0 -or -not (Test-Path $exportPath)) {
     Write-Host "----------------------------------------------------" -ForegroundColor Red
     Write-Host "BUILD FAILED!" -ForegroundColor Red
@@ -37,14 +52,14 @@ if ($process.ExitCode -ne 0 -or -not (Test-Path $exportPath)) {
     Write-Host "Common causes:"
     Write-Host "  1. Missing Export Templates - Open Godot Editor -> Editor -> Manage Export Templates -> Download"
     Write-Host "  2. export_presets.cfg missing or corrupted"
-    Write-Host "  3. Check Godot console output for specific errors"
+    Write-Host "  3. Godot version mismatch (Expected v4.4.1)"
     Write-Host "----------------------------------------------------" -ForegroundColor Red
     exit 1
 }
 
 Write-Host "Export successful!" -ForegroundColor Green
 
-# 4. Packaging
+# 6. Packaging
 $zipName = "TeamDark_Windows.zip"
 $zipPath = "$buildDir\$zipName"
 

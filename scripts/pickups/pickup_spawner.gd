@@ -3,8 +3,10 @@ extends Node
 class_name PickupSpawner
 
 @export var weapon_scenes: Array[PackedScene] = []
+@export var utility_scenes: Array[PackedScene] = []
 @export var health_count: int = 20
 @export var weapon_count: int = 20
+@export var utility_count: int = 10
 @export var gem_count: int = 3
 @export var extraction_scene: PackedScene
 
@@ -52,6 +54,16 @@ func spawn_pickups(hex_map: Dictionary):
 		var pos = hex.get_world_position()
 		var w_scene = weapon_scenes[randi() % weapon_scenes.size()]
 		_spawn_pickup("weapon", w_scene, pos, pickups_node)
+		
+	# Spawn Utilities (Random)
+	for i in range(utility_count):
+		if utility_scenes.is_empty():
+			break
+		var coords = hex_keys[randi() % hex_keys.size()]
+		var hex = hex_map[coords]
+		var pos = hex.get_world_position()
+		var u_scene = utility_scenes[randi() % utility_scenes.size()]
+		_spawn_pickup("weapon", u_scene, pos, pickups_node)
 		
 	# Spawn Health (Random)
 	for i in range(health_count):

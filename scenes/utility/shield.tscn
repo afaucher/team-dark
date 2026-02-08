@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://shield_scene"]
+
+[ext_resource type="Script" path="res://scripts/utility/shield.gd" id="1_script"]
+
+[node name="EnergyShield" type="Node2D"]
+script = ExtResource("1_script")
+duration = 4.0
+cooldown = 10.0
+shield_radius = 90.0
