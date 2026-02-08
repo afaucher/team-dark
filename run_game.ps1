@@ -6,6 +6,10 @@ if (-not (Test-Path $godotPath)) {
     exit 1
 }
 
+# Cleanup previous instances
+Get-Process "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 1
+
 # Run the project. The main scene is defined in project.godot, but we can be explicit.
 # Passing --path to ensure it uses the script's directory as project root.
 # Launch the game and wait, redirecting output to a timestamped log file
