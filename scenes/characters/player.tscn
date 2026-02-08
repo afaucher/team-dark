@@ -15,6 +15,9 @@ properties/1/replication_mode = 1
 properties/2/path = NodePath(".:velocity")
 properties/2/spawn = true
 properties/2/replication_mode = 1
+properties/3/path = NodePath(".:player_name")
+properties/3/spawn = true
+properties/3/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D" groups=["players"]]
 z_index = 10
@@ -24,6 +27,18 @@ script = ExtResource("1_script")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_1")
+
+[node name="NameLabel" type="Label" parent="."]
+z_index = 20
+offset_left = -100.0
+offset_top = -60.0
+offset_right = 100.0
+offset_bottom = -34.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+text = "Player"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_1")
@@ -37,16 +52,16 @@ polygon = PackedVector2Array(-10, -10, 10, 0, -10, 10)
 color = Color(0, 0.6, 0.8, 1)
 
 [node name="MountLeft" type="Node2D" parent="."]
-position = Vector2(0, -20)
+show_behind_parent = true
+position = Vector2(0, -32)
 
 [node name="MountRight" type="Node2D" parent="."]
-position = Vector2(20, 10)
+show_behind_parent = true
+position = Vector2(0, 32)
 
-[node name="MountTop" type="Node2D" parent="."]
-position = Vector2(-20, 10)
-# Note: Positions are arbitrary, just splitting them
-
-
+[node name="MountFront" type="Node2D" parent="."]
+show_behind_parent = true
+position = Vector2(32, 0)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(0.8, 0.8)

@@ -1,0 +1,11 @@
+[gd_scene load_steps=4 format=3 uid="uid://pickup_spawner_scene_uid"]
+
+[ext_resource type="Script" path="res://scripts/pickups/pickup_spawner.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://pellet_gun_scene" path="res://scenes/weapons/pellet_gun.tscn" id="2_pellet_gun"]
+[ext_resource type="PackedScene" uid="uid://machine_gun_scene" path="res://scenes/weapons/machine_gun.tscn" id="3_machine_gun"]
+
+[node name="PickupSpawner" type="Node"]
+script = ExtResource("1_script")
+weapon_scenes = Array[PackedScene]([ExtResource("2_pellet_gun"), ExtResource("3_machine_gun")])
+health_count = 15
+weapon_count = 15

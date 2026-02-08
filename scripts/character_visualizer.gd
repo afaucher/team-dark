@@ -18,10 +18,17 @@ func _ready():
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Color("#1a1a2e") # Dark background
 	env.glow_enabled = true
-	env.glow_intensity = 0.5
-	env.glow_strength = 1.0
-	env.glow_mix = 0.5 # Additive
-	env.glow_bloom = 0.5
+	env.set_glow_level(1, 1.0) # Enable small blur
+	env.set_glow_level(2, 1.0)
+	env.set_glow_level(3, 1.0)
+	env.set_glow_level(4, 1.0)
+	env.set_glow_level(5, 1.0) # Enable large blur (Halo)
+	env.glow_intensity = 0.8
+	env.glow_strength = 0.95
+	env.glow_mix = 0.1 # Additive mix (low mix preserves original color better)
+	env.glow_bloom = 0.1 # Threshold for bloom
+	env.glow_hdr_threshold = 1.2 # Allow HDR colors > 1.2 to trigger strong glow
+	env.glow_hdr_scale = 2.0
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	
 	var world_env = WorldEnvironment.new()

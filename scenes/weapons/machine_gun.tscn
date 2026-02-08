@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://machine_gun_scene"]
+
+[ext_resource type="Script" path="res://scripts/weapons/machine_gun.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://pellet_projectile_scene" path="res://scenes/projectiles/pellet.tscn" id="2_projectile"]
+
+[node name="MachineGun" type="Node2D"]
+script = ExtResource("1_script")
+projectile_scene = ExtResource("2_projectile")

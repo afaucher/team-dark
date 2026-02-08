@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3 uid="uid://pellet_projectile_scene"]
+
+[ext_resource type="Script" path="res://scripts/projectiles/pellet.gd" id="1_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pellet"]
+radius = 4.0
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_pellet"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[node name="Pellet" type="Area2D"]
+collision_layer = 8
+collision_mask = 5
+script = ExtResource("1_script")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_pellet")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_pellet")

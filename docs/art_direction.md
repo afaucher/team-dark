@@ -42,3 +42,6 @@ We use an automated screenshot workflow to validate procedural generation and vi
 - **Outlines**: Use Godot's `draw_polyline` or shaders for outlines.
 - **Glow**: Use `WorldEnvironment` with Glow enabled (HDR threshold ~1.0).
 - **Hex Grid**: Already implemented in `map_renderer.gd`, need to update colors to match this palette.
+
+## Concept Reference
+![Concept Screenshot](concept_screenshot.png)

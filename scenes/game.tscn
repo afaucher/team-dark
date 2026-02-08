@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://game_scene_uid"]
+[gd_scene load_steps=8 format=3 uid="uid://game_scene_uid"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_manager"]
 [ext_resource type="PackedScene" uid="uid://map_scene_uid" path="res://scenes/map/map.tscn" id="2_map"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://enemy_spawner_scene_uid" path="res://scenes/characters/enemy_spawner.tscn" id="4_spawner"]
 [ext_resource type="PackedScene" uid="uid://main_menu_scene_uid" path="res://scenes/ui/main_menu.tscn" id="5_menu"]
 [ext_resource type="PackedScene" uid="uid://hud_scene_uid" path="res://scenes/ui/hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" uid="uid://pellet_projectile_scene" path="res://scenes/projectiles/pellet.tscn" id="7_pellet"]
+[ext_resource type="PackedScene" uid="uid://pickup_spawner_scene_uid" path="res://scenes/objects/pickup_spawner.tscn" id="8_pickups"]
 
 [node name="Game" type="Node"]
 script = ExtResource("1_manager")
@@ -14,3 +16,17 @@ player_scene = ExtResource("3_player")
 enemy_spawner_scene = ExtResource("4_spawner")
 main_menu_scene = ExtResource("5_menu")
 hud_scene = ExtResource("6_hud")
+pickup_spawner_scene = ExtResource("8_pickups")
+
+[node name="Projectiles" type="Node2D" parent="."]
+
+[node name="Pickups" type="Node2D" parent="."]
+
+[node name="ProjectileSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/projectiles/pellet.tscn")
+spawn_path = NodePath("../Projectiles")
+
+[node name="PickupSpawnerSync" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/objects/pickup.tscn")
+spawn_path = NodePath("../Pickups")
+

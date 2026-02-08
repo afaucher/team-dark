@@ -32,10 +32,19 @@ func generate_map(custom_seed: int = 0):
 	return hex_map
 
 func _get_height(q: int, r: int) -> int:
-	# Use noise to generate height steps (0, 1, 2...)
-	var value = noise.get_noise_2d(q * 10, r * 10)
-	# Normalize and step
-	if value < -0.2: return 0
-	if value < 0.2: return 1
-	if value < 0.5: return 2
-	return 3
+	# Increased weight of warping and main noise frequency to force more cliffs
+	var warp_scale = 12.0
+	var warp_x = noise.get_noise_2d(q * warp_scale, r * warp_scale) * 20.0
+	var warp_y = noise.get_noise_2d(r * warp_scale, q * warp_scale) * 20.0
+	
+	# Main noise - Higher multiplier = more frequent changes / smaller plateaus
+	var main_freq = 6.0
+	var value = noise.get_noise_2d(q * main_freq + warp_x, r * main_freq + warp_y)
+	
+	# Normalize to 0..1
+	value = (value + 1.0) / 2.0
+	
+	# Quantize into steps (0 to 24)
+	# A jump of > 2 in this result will create a cliff.
+	var total_height = value * 24.0
+	return int(total_height)

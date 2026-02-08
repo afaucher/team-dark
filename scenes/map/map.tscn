@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/map/map_renderer.gd" id="1_renderer"]
 [ext_resource type="Script" path="res://scenes/map/map_generator.gd" id="2_generator"]
+[ext_resource type="Script" path="res://scenes/map/map_physics.gd" id="3_physics"]
 
 [node name="Map" type="Node2D"]
 script = ExtResource("1_renderer")
@@ -9,3 +10,7 @@ map_generator_path = NodePath("Generator")
 
 [node name="Generator" type="Node" parent="."]
 script = ExtResource("2_generator")
+
+[node name="Physics" type="Node2D" parent="."]
+script = ExtResource("3_physics")
+

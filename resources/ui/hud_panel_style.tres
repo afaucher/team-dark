@@ -1,0 +1,13 @@
+[gd_resource type="StyleBoxFlat" format=3 uid="uid://hud_panel_style"]
+
+[resource]
+bg_color = Color(0.0588235, 0.0588235, 0.0588235, 0.8) # Dark semi-transparent
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.223529, 1, 0.0784314, 1) # Neon Green #39ff14
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5

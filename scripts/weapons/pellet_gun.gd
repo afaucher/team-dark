@@ -1,0 +1,86 @@
+extends Node2D
+
+@export var weapon_name: String = "Pellet Gun"
+@export var projectile_scene: PackedScene
+@export var fire_rate: float = 1.0 # Shots per second (1.0 = 1 shot every 1s)
+
+var can_fire: bool = true
+var _timer: Timer
+
+func _ready():
+	_timer = Timer.new()
+	_timer.wait_time = 1.0 / fire_rate
+	_timer.one_shot = true
+	_timer.timeout.connect(_on_timer_timeout)
+	add_child(_timer)
+	queue_redraw()
+
+func _draw():
+	# Neon Vector Weapon Style
+	var barrel_length = 20.0
+	var barrel_width = 8.0
+	var color = Color(0.0, 2.0, 2.0, 1.0) # Cyan HDR
+	
+	# Barrel (Hollow Rectangle)
+	var points = PackedVector2Array([
+		Vector2(0, -barrel_width/2),
+		Vector2(barrel_length, -barrel_width/2),
+		Vector2(barrel_length, barrel_width/2),
+		Vector2(0, barrel_width/2),
+		Vector2(0, -barrel_width/2)
+	])
+	
+	# Glow backing
+	draw_polyline(points, color * Color(1, 1, 1, 0.3), 6.0)
+	# Center Fill
+	draw_colored_polygon(points, Color.BLACK)
+	# Outline
+	draw_polyline(points, color, 2.0)
+	# High-intensity tip
+	draw_circle(Vector2(barrel_length, 0), 2.0, Color.WHITE)
+
+
+func trigger(just_pressed: bool, is_held: bool):
+	# Requirement: "require you to pull the trigger each time"
+	if just_pressed and can_fire:
+		shoot()
+		can_fire = false
+		_timer.start()
+
+func get_attacker_id() -> int:
+	var parent = get_parent() # Mount
+	if parent:
+		var grand_parent = parent.get_parent() # Player
+		if grand_parent and "player_id" in grand_parent:
+			return grand_parent.player_id
+	return 1 # Fallback
+
+func shoot():
+	if projectile_scene:
+		if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
+			_request_shoot.rpc_id(1) # Ask server to shoot
+		else:
+			_spawn_projectile()
+
+@rpc("any_peer", "call_local")
+func _request_shoot():
+	_spawn_projectile()
+
+func _spawn_projectile():
+	var projectile = projectile_scene.instantiate()
+	projectile.global_position = global_position
+	projectile.global_rotation = global_rotation
+	
+	if "attacker_id" in projectile:
+		projectile.attacker_id = get_attacker_id()
+	
+	# Add to the current scene "Projectiles" node
+	var projectiles_node = get_tree().root.find_child("Projectiles", true, false)
+	
+	if projectiles_node:
+		projectiles_node.add_child(projectile, true)
+	else:
+		get_tree().current_scene.add_child(projectile)
+
+func _on_timer_timeout():
+	can_fire = true
