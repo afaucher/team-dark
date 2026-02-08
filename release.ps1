@@ -3,7 +3,6 @@ $godotPath = "C:\Users\alexa\Downloads\Godot_v4.6-stable_win64.exe\Godot_v4.6-st
 $buildDir = "$PSScriptRoot\build"
 $windowsBuildDir = "$buildDir\windows"
 $exportPath = "$windowsBuildDir\TeamDark.exe"
-$godotVersion = & $godotPath --version
 
 # 1. Verification
 if (-not (Test-Path $godotPath)) {
@@ -22,17 +21,23 @@ New-Item -ItemType Directory -Force -Path $windowsBuildDir | Out-Null
 # 3. Export Windows Desktop Build
 Write-Host "Exporting Windows Desktop build to $exportPath..." -ForegroundColor Cyan
 
-# Using the call operator & instead of Start-Process as it handles quoted arguments more reliably in PowerShell
-& $godotPath --path $PSScriptRoot --headless --export-release "Windows Desktop" "$exportPath"
+# Manually construct argument string for Start-Process to ensure correct quoting
+# We escape inner quotes with backticks to verify they are passed literally to the executable
+$godotArgs = "--path `"$PSScriptRoot`" --headless --export-release `"Windows Desktop`" `"$exportPath`""
 
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exportPath)) {
+# Run Godot export
+$process = Start-Process -FilePath $godotPath -ArgumentList $godotArgs -Wait -PassThru -NoNewWindow
+
+# Check if export succeeded
+if ($process.ExitCode -ne 0 -or -not (Test-Path $exportPath)) {
     Write-Host "----------------------------------------------------" -ForegroundColor Red
     Write-Host "BUILD FAILED!" -ForegroundColor Red
-    if (-not (Test-Path $exportPath)) {
-        Write-Host "Error: The export completed, but the executable was not found at $exportPath."
-    }
-    Write-Host "Reason: Likely missing Export Templates for version $godotVersion."
-    Write-Host "Fix: Open the Godot Editor, go to 'Editor -> Manage Export Templates', and install them."
+    Write-Host "Error: The executable was not created at $exportPath."
+    Write-Host ""
+    Write-Host "Common causes:"
+    Write-Host "  1. Missing Export Templates - Open Godot Editor -> Editor -> Manage Export Templates -> Download"
+    Write-Host "  2. export_presets.cfg missing or corrupted"
+    Write-Host "  3. Check Godot console output for specific errors"
     Write-Host "----------------------------------------------------" -ForegroundColor Red
     exit 1
 }
@@ -45,16 +50,19 @@ $zipPath = "$buildDir\$zipName"
 
 Write-Host "Packaging build into $zipPath..." -ForegroundColor Cyan
 
-if (-not (Test-Path $exportPath)) {
-    Write-Error "Executable missing, cannot package!"
-    exit 1
+# Remove .tmp file if present (Godot temp file)
+$tmpFile = "$windowsBuildDir\TeamDark.tmp"
+if (Test-Path $tmpFile) {
+    Remove-Item $tmpFile -Force
 }
 
 Compress-Archive -Path "$windowsBuildDir\*" -DestinationPath $zipPath -Force
 
+$exeSize = [math]::Round((Get-Item $exportPath).Length / 1MB, 1)
+$zipSize = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
+
 Write-Host "----------------------------------------------------"
 Write-Host "Build Complete!" -ForegroundColor Green
-Write-Host "Artifacts location: $buildDir"
-Write-Host "Executable: $exportPath"
-Write-Host "ZIP: $zipPath"
+Write-Host "Executable: $exportPath ($exeSize MB)"
+Write-Host "ZIP: $zipPath ($zipSize MB)"
 Write-Host "----------------------------------------------------"
