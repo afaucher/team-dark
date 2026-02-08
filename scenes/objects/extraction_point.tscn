@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://extraction_point_scene"]
+
+[ext_resource type="Script" path="res://scripts/objects/extraction_point.gd" id="1_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_extract"]
+radius = 60.0
+
+[node name="ExtractionPoint" type="Area2D"]
+z_index = 5
+script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_extract")

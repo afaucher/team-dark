@@ -13,6 +13,7 @@ extends CanvasLayer
 @onready var mount_top_icon_container = $Control/Mounts/Top/Icon
 @onready var teammate_list = $Control/TeammateList
 @onready var fps_label = $Control/FPSCounter
+@onready var gem_label = $Control/GemCounter
 
 const WeaponIconScript = preload("res://scripts/ui/weapon_icon.gd")
 
@@ -100,4 +101,10 @@ func update_teammates(players: Dictionary):
 		var p = players[id]
 		var label = Label.new()
 		label.text = p.name
-		teammate_list.add_child(label)
+
+func update_gems(count: int, max_gems: int):
+	gem_label.text = "Gems: " + str(count) + " / " + str(max_gems)
+	if count >= max_gems:
+		gem_label.modulate = Color(0, 1, 0) # Green
+	else:
+		gem_label.modulate = Color(1, 0, 1) # Magenta

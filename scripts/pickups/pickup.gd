@@ -103,6 +103,14 @@ func pickup_collected(picker_id: int, mount_index: int):
 	elif pickup_type == "ammo":
 		if player.has_method("add_ammo"):
 			player.add_ammo(50)
+	elif pickup_type == "gem":
+		# Increment global gem count via GameManager (RPC)
+		var game_node = get_tree().current_scene # Game node
+		if game_node.has_method("increment_gem_count"):
+			game_node.increment_gem_count() # Already checks server side inside, but this is server side here too
+		# Wait, increment_gem_count is on GameManager script which is attached to 'Game' node?
+		# Yes. And pickup_collected runs on SERVER.
+		# So we can call it directly.
 	
 	# Remove this pickup from all clients
 	queue_free()

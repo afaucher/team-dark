@@ -43,6 +43,9 @@ func _on_body_entered(body):
 	if body == owner_node:
 		return
 	
+	# Spawn impact particles (small chance of blue sparks)
+	ParticleSpawner.spawn_impact(global_position)
+	
 	if body.has_method("take_damage"):
 		body.take_damage(damage, attacker_id)
 	

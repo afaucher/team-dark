@@ -121,11 +121,15 @@ func take_damage(amount: float, attacker_id: int):
 	if not multiplayer.is_server(): return
 	
 	current_hp -= amount
+	# Spawn damage particles (50% chance)
+	ParticleSpawner.spawn_damage(global_position)
 	if current_hp <= 0:
 		die()
 
 func die():
 	print("Enemy died")
+	# Death explosion - use the enemy's color theme
+	ParticleSpawner.spawn_death(global_position, color_theme)
 	queue_free()
 
 func _fire_all_weapons(just_pressed: bool, held: bool):

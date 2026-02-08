@@ -21,6 +21,7 @@ run/main_scene="res://scenes/game.tscn"
 
 NetworkManager="*res://scenes/autoload/network_manager.gd"
 DebugManager="*res://scenes/autoload/debug_manager.gd"
+ParticleSpawner="*res://scripts/effects/particle_spawner.gd"
 
 [display]
 

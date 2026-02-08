@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://game_scene_uid"]
+[gd_scene load_steps=9 format=3 uid="uid://game_scene_uid"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_manager"]
 [ext_resource type="PackedScene" uid="uid://map_scene_uid" path="res://scenes/map/map.tscn" id="2_map"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://hud_scene_uid" path="res://scenes/ui/hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" uid="uid://pellet_projectile_scene" path="res://scenes/projectiles/pellet.tscn" id="7_pellet"]
 [ext_resource type="PackedScene" uid="uid://pickup_spawner_scene_uid" path="res://scenes/objects/pickup_spawner.tscn" id="8_pickups"]
+[ext_resource type="PackedScene" uid="uid://particle_spawner_scene" path="res://scenes/effects/particle_spawner.tscn" id="9_particles"]
 
 [node name="Game" type="Node"]
 script = ExtResource("1_manager")
@@ -38,3 +39,4 @@ spawn_path = NodePath("../Pickups")
 _spawnable_scenes = PackedStringArray("res://scenes/characters/enemy.tscn")
 spawn_path = NodePath("../Enemies")
 
+[node name="ParticleSpawner" parent="." instance=ExtResource("9_particles")]

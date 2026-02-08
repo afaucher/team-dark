@@ -11,6 +11,9 @@ var current_map = null
 var current_seed: int = 0
 var players_container = null
 
+const MAX_GEMS: int = 3
+var collected_gems: int = 0
+
 func _ready():
 	# Configure Projectile Spawner
 	var spawner = get_node_or_null("ProjectileSpawner")
@@ -151,3 +154,89 @@ func _on_server_disconnected():
 		players_container = null
 	
 	_show_main_menu()
+
+@rpc("any_peer", "call_local", "reliable")
+func increment_gem_count():
+	if not multiplayer.is_server(): return
+	
+	if collected_gems >= MAX_GEMS:
+		return
+		
+	collected_gems += 1
+	_sync_gem_count.rpc(collected_gems)
+	
+	if collected_gems >= MAX_GEMS:
+		print("ALL GEMS COLLECTED! Extraction Point Active!")
+		var extraction = get_tree().current_scene.find_child("ExtractionPoint", true, false)
+		if extraction and extraction.has_method("activate"):
+			extraction.activate.rpc()
+
+@rpc("authority", "call_local", "reliable")
+func _sync_gem_count(count: int):
+	# On client, update the variable and UI
+	collected_gems = count
+	print("Gems Collected: ", count, "/", MAX_GEMS)
+	
+@rpc("authority", "call_local", "reliable")
+func trigger_win(player_id: int):
+	# Could be authority or any peer notifying?
+	# For security, only server should call this RPC on clients.
+	# But server logic handles the call from object.
+	
+	print("WIN CONDITION MET by Player ", player_id)
+	
+	# Show Win Screen / Menu
+	var hud = get_tree().root.find_child("HUD", true, false)
+	if hud:
+		var label = Label.new()
+		label.text = "VICTORY!\nPlayer " + str(player_id) + " Extracted!"
+		label.theme_override_font_sizes/font_size = 64
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.anchors_preset = Control.PRESET_CENTER
+		label.set_anchors_preset(Control.PRESET_CENTER)
+		hud.add_child(label)
+	
+	# After delay, restart?
+	await get_tree().create_timer(5.0).timeout
+	# If server, restart game? This is simple logic for now.
+	if multiplayer.is_server():
+		# _load_map again? Or return to lobby?
+		pass
+
+func on_player_died(player_id: int):
+	# Server only
+	if not multiplayer.is_server(): return
+	
+	print("GameManager: Player ", player_id, " died. Respawning in 3s...")
+	# 3 second respawn timer
+	await get_tree().create_timer(3.0).timeout
+	_respawn_player_logic(player_id)
+
+func _respawn_player_logic(player_id: int):
+	var spawn_pos = Vector2(0, 0) # Default start
+	
+	# Find teammate to spawn on
+	var teammates_alive = []
+	if players_container:
+		for p in players_container.get_children():
+			# Check if alive (property check) and NOT the dying player
+			if p.player_id != player_id:
+				if "is_dead" in p and not p.is_dead:
+					teammates_alive.append(p)
+	
+	if teammates_alive.size() > 0:
+		var target = teammates_alive.pick_random()
+		# Spawn nearby (offset)
+		var offset = Vector2.from_angle(randf() * TAU) * 100.0
+		spawn_pos = target.global_position + offset
+		print("Respawning Player ", player_id, " near Teammate ", target.player_id)
+	else:
+		print("Respawning Player ", player_id, " at Start (No teammates alive)")
+		# Try to find a safe spot near 0,0 or map center if 0,0 isn't safe? 
+		# For now, 0,0 is safe-ish or just the start pad.
+	
+	# Call respawn on the player object
+	if players_container and players_container.has_node(str(player_id)):
+		var p = players_container.get_node(str(player_id))
+		p.respawn.rpc(spawn_pos)

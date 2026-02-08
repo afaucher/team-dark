@@ -164,9 +164,11 @@ func add_ammo(amount: int):
 
 func _physics_process(delta):
 	if is_multiplayer_authority():
-		_handle_input(delta)
+		if not is_dead:
+			_handle_input(delta)
 	
-	move_and_slide()
+	if not is_dead:
+		move_and_slide()
 
 func _handle_input(delta):
 	var direction = Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -284,6 +286,7 @@ func _fire_mount(index: int, just_pressed: bool, held: bool):
 			weapon.trigger(just_pressed, held)
 
 func _input(event):
+	if is_dead: return
 	if event.is_action_pressed("toggle_debug"):
 		queue_redraw()
 
@@ -405,6 +408,8 @@ func take_damage(amount: float, attacker_id: int):
 func take_damage_direct(amount: float):
 	current_hp -= amount
 	print("Player ", player_id, " took ", amount, " damage. HP: ", current_hp)
+	# Spawn damage particles (50% chance, handled by ParticleSpawner)
+	ParticleSpawner.spawn_damage(global_position)
 	# Notify the owning client about HP change
 	_sync_hp_to_client.rpc_id(player_id, current_hp)
 	if current_hp <= 0:
@@ -417,11 +422,49 @@ func _update_health_hud():
 		if hud and hud.has_method("update_health"):
 			hud.update_health(current_hp / max_hp)
 
+@export var is_dead: bool = false:
+	set(val):
+		is_dead = val
+		visible = not is_dead
+		if has_node("CollisionShape2D"):
+			$CollisionShape2D.set_deferred("disabled", is_dead)
+
 func die():
+	if is_dead: return
+	
 	print("Player ", player_id, " died!")
+	is_dead = true
+	
+	# Death explosion particles
+	ParticleSpawner.spawn_death(global_position, Color(0.2, 0.8, 1.0))
+	
+	# Reset HP but stay dead until respawn
+	current_hp = 0
+	_sync_hp_to_client.rpc_id(player_id, 0)
+	
+	# Sync death state to everyone
+	_sync_death_state.rpc(true)
+	
+	# Notify GameManager to handle respawn timer (Server only)
+	if multiplayer.is_server():
+		var gm = get_tree().root.find_child("GameManager", true, false)
+		if gm and gm.has_method("on_player_died"):
+			gm.on_player_died(player_id)
+
+@rpc("any_peer", "call_local", "reliable")
+func respawn(pos: Vector2):
+	print("Player ", player_id, " respawning at ", pos)
+	position = pos
 	current_hp = max_hp
-	position = Vector2(100, 100)
-	_sync_hp_to_client.rpc_id(player_id, current_hp)
+	_sync_hp_to_client.rpc_id(player_id, max_hp)
+	
+	is_dead = false
+	_sync_death_state.rpc(false)
+
+@rpc("call_local", "reliable")
+func _sync_death_state(dead: bool):
+	is_dead = dead
+
 
 @rpc("any_peer", "call_local", "reliable")
 func _sync_hp_to_client(hp: float):

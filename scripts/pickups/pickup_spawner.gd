@@ -5,6 +5,8 @@ class_name PickupSpawner
 @export var weapon_scenes: Array[PackedScene] = []
 @export var health_count: int = 20
 @export var weapon_count: int = 20
+@export var gem_count: int = 3
+@export var extraction_scene: PackedScene
 
 func spawn_pickups(hex_map: Dictionary):
 	if not multiplayer.is_server():
@@ -20,6 +22,17 @@ func spawn_pickups(hex_map: Dictionary):
 	if not pickups_node:
 		print("ERROR: Pickups node NOT FOUND in Game scene!")
 		return
+
+	# Spawn Extraction Point (1)
+	if extraction_scene:
+		var coords = hex_keys[randi() % hex_keys.size()]
+		var hex = hex_map[coords]
+		var pos = hex.get_world_position()
+		var ext = extraction_scene.instantiate()
+		ext.global_position = pos
+		ext.name = "ExtractionPoint"
+		pickups_node.add_child(ext, true)
+		print("Spawned Extraction Point at ", pos)
 
 	# Spawn Weapons
 	for i in range(weapon_count):
@@ -38,6 +51,13 @@ func spawn_pickups(hex_map: Dictionary):
 		var pos = hex.get_world_position()
 		_spawn_pickup("health", null, pos, pickups_node)
 
+	# Spawn Gems
+	for i in range(gem_count):
+		var coords = hex_keys[randi() % hex_keys.size()]
+		var hex = hex_map[coords]
+		var pos = hex.get_world_position()
+		_spawn_pickup("gem", null, pos, pickups_node)
+
 func _spawn_pickup(type: String, scene: PackedScene, pos: Vector2, parent: Node):
 	var pickup_pkg = load("res://scenes/objects/pickup.tscn")
 	var pickup = pickup_pkg.instantiate()
@@ -53,5 +73,7 @@ func _spawn_pickup(type: String, scene: PackedScene, pos: Vector2, parent: Node)
 		temp.free()
 	elif type == "health":
 		pickup.pickup_name = "Health Kit"
-	
+	elif type == "gem":
+		pickup.pickup_name = "Power Gem"
+		
 	parent.add_child(pickup, true)
