@@ -446,10 +446,16 @@ func die():
 	_sync_death_state.rpc(true)
 	
 	# Notify GameManager to handle respawn timer (Server only)
+	# Notify GameManager to handle respawn timer (Server only)
 	if multiplayer.is_server():
-		var gm = get_tree().root.find_child("GameManager", true, false)
+		var gm = get_tree().root.find_child("Game", true, false)
+		if not gm:
+			gm = get_tree().root.find_child("GameManager", true, false)
+			
 		if gm and gm.has_method("on_player_died"):
 			gm.on_player_died(player_id)
+		else:
+			print("CRITICAL ERROR: GameManager not found!")
 
 @rpc("any_peer", "call_local", "reliable")
 func respawn(pos: Vector2):
