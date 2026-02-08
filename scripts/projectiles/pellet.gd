@@ -7,6 +7,8 @@ extends Area2D
 var traveled_distance: float = 0.0
 
 var attacker_id: int = 1
+var owner_node: Node = null # The entity that fired this projectile
+var spawn_protection: float = 0.05 # Brief invulnerability to prevent self-hits
 
 func _ready():
 	add_to_group("projectiles")
@@ -24,8 +26,8 @@ func _physics_process(delta):
 	position += Vector2.RIGHT.rotated(rotation) * move_step
 	traveled_distance += move_step
 	
-	if Engine.get_physics_frames() % 60 == 0:
-		print("Projectile ", name, " at ", position, " Auth: ", is_multiplayer_authority())
+	if spawn_protection > 0:
+		spawn_protection -= delta
 	
 	if traveled_distance > max_distance:
 		queue_free()
@@ -33,11 +35,17 @@ func _physics_process(delta):
 	queue_redraw()
 
 func _on_body_entered(body):
+	# Skip if still in spawn protection
+	if spawn_protection > 0:
+		return
+	
+	# Skip if this is the owner (prevent self-damage)
+	if body == owner_node:
+		return
+	
 	if body.has_method("take_damage"):
-		# Check if the body expects attacker_id
 		body.take_damage(damage, attacker_id)
 	
-	# Destroy projectile on impact with anything unless it's the owner (handled by collision layers usually)
 	queue_free()
 
 func _input(event):

@@ -24,3 +24,6 @@ screenshots/
 
 # Build output
 build/
+
+# Temp files
+godot_help.txt

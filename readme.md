@@ -9,27 +9,26 @@ To build the game (using `./release.ps1`), you must have **Export Templates** in
 2. Go to **Editor -> Manage Export Templates**.
 3. Click **Download and Install**.
 
-## How to Run
+## How to Play
 
-### Client
-1.  Open the project in Godot 4.x.
-2.  Press F5 (Play Main Scene).
-3.  Enter your player name in the main menu.
-4.  Join the game!
+### Option 1: Host a Game (Listen Server)
+1. Run `TeamDark.exe`.
+2. Enter your name and click **"Host Game"**.
+3. Share your IP address with friends.
+4. You're now playing AND hosting!
 
-### Server
-To run a dedicated server:
+### Option 2: Join a Game
+1. Run `TeamDark.exe`.
+2. Enter your name.
+3. Enter the host's IP address (or leave blank for localhost).
+4. Click **"Join Game"**.
 
-1.  Export the project for your platform (Linux/Windows).
-2.  Run the exported executable with the `--server` flag:
-    ```bash
-    ./TeamDark.exe --server
-    ```
-    Or run from the editor:
-    ```bash
-    godot --headless --server
-    ```
-3.  The server will listen on port `ENET_PORT` (default: 8910).
+### Option 3: Dedicated Server
+For a standalone server (no player on the host machine):
+```bash
+TeamDark.exe --server --headless
+```
+Clients then connect using the dedicated server's IP.
 
 ## Controls
 
@@ -43,7 +42,7 @@ To run a dedicated server:
 | Toggle Debug | F3 | - |
 | Quit | Esc | - |
 
-## CLI Commands
+## CLI Commands (Development)
 
 We provide PowerShell scripts for a streamlined development workflow:
 
@@ -65,10 +64,10 @@ Checks all `.gd` scripts for syntax errors using Godot's headless mode.
 ./validate.ps1
 ```
 
-### Dedicated Server
-Starts only a dedicated server instance.
+### Run Single Instance
+Launches just the game (useful for testing host/join flow manually).
 ```powershell
-./run_server.ps1
+./run_game.ps1
 ```
 
 ### Visual Testing
@@ -82,3 +81,4 @@ Screenshots are saved to `docs/screenshots/`.
 1. Run `./release.ps1`.
 2. Find the packaged ZIP in `./build/TeamDark_Windows.zip`.
 3. Distribute the ZIP to players.
+4. Players can **Host** or **Join** using the in-game menu—no separate server required!

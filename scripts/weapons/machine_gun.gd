@@ -140,6 +140,12 @@ func _spawn_projectile():
 	if "attacker_id" in projectile:
 		projectile.attacker_id = get_attacker_id()
 	
+	# Set owner to prevent self-damage
+	if "owner_node" in projectile:
+		var mount = get_parent()
+		if mount:
+			projectile.owner_node = mount.get_parent() # Player or Enemy
+	
 	var projectiles_node = get_tree().root.find_child("Projectiles", true, false)
 	if projectiles_node:
 		projectiles_node.add_child(projectile, true)

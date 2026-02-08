@@ -156,6 +156,7 @@ func swap_weapon(mount_index: int, new_weapon_path: String):
 func heal(amount: float):
 	current_hp = min(current_hp + amount, max_hp)
 	print("Player ", player_id, " healed by ", amount, ". HP: ", current_hp)
+	_update_health_hud()
 
 func add_ammo(amount: int):
 	print("Player ", player_id, " received ", amount, " ammo.")
@@ -283,19 +284,9 @@ func _fire_mount(index: int, just_pressed: bool, held: bool):
 			weapon.trigger(just_pressed, held)
 
 func _input(event):
-	# DEBUG: Log EVERYTHING to help identify trigger indices
-	if event is InputEventKey and event.pressed:
-		print("P", player_id, " KEY: ", event.as_text())
-	elif event is InputEventMouseButton and event.pressed:
-		print("P", player_id, " MOUSE: ", event.button_index)
-	elif event is InputEventJoypadButton:
-		print("P", player_id, " JOY_BUTTON: ", event.button_index, " pressed: ", event.pressed)
-	elif event is InputEventJoypadMotion:
-		if abs(event.axis_value) > 0.1: # Much lower threshold for detection
-			print("P", player_id, " JOY_AXIS: ", event.axis, " value: ", event.axis_value)
-			
 	if event.is_action_pressed("toggle_debug"):
 		queue_redraw()
+
 
 func _draw():
 	# Neon Vector Style via Procedural Glow
@@ -378,7 +369,11 @@ func _draw():
 			draw_circle(rel_pos, 8.0, Color.YELLOW)
 
 @export var max_hp: float = 100.0
-var current_hp: float = 100.0
+var current_hp: float = 100.0:
+	set(val):
+		current_hp = val
+		if is_inside_tree():
+			_update_health_hud()
 
 @rpc("any_peer", "call_local")
 func take_damage(amount: float, attacker_id: int):
@@ -410,16 +405,30 @@ func take_damage(amount: float, attacker_id: int):
 func take_damage_direct(amount: float):
 	current_hp -= amount
 	print("Player ", player_id, " took ", amount, " damage. HP: ", current_hp)
+	# Notify the owning client about HP change
+	_sync_hp_to_client.rpc_id(player_id, current_hp)
 	if current_hp <= 0:
 		die()
 
+func _update_health_hud():
+	var is_local = (player_id == multiplayer.get_unique_id())
+	if is_local:
+		var hud = get_tree().root.find_child("HUD", true, false)
+		if hud and hud.has_method("update_health"):
+			hud.update_health(current_hp / max_hp)
+
 func die():
 	print("Player ", player_id, " died!")
-	# Respawn logic or game over?
-	# "The spawn is always near the player and only after the player is out of combat." (Refers to spawning IN?)
-	# For death, maybe just respawn at a safe point.
 	current_hp = max_hp
-	position = Vector2(100, 100) # Reset position for now
+	position = Vector2(100, 100)
+	_sync_hp_to_client.rpc_id(player_id, current_hp)
+
+@rpc("any_peer", "call_local", "reliable")
+func _sync_hp_to_client(hp: float):
+	current_hp = hp
+	var hud = get_tree().root.find_child("HUD", true, false)
+	if hud and hud.has_method("update_health"):
+		hud.update_health(current_hp / max_hp)
 
 func _process(delta):
 	# Update label text in case it changed via sync

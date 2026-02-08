@@ -32,3 +32,9 @@ spawn_path = NodePath("../Projectiles")
 _spawnable_scenes = PackedStringArray("res://scenes/objects/pickup.tscn")
 spawn_path = NodePath("../Pickups")
 
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="EnemySpawnerSync" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/characters/enemy.tscn")
+spawn_path = NodePath("../Enemies")
+

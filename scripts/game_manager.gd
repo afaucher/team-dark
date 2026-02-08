@@ -77,11 +77,18 @@ func _load_map(seed_val: int):
 			map_gen.queue_redraw()
 			
 			# Spawn Pickups (Server only)
-			if multiplayer.is_server() and pickup_spawner_scene:
-				var spawner = pickup_spawner_scene.instantiate()
-				add_child(spawner)
-				if spawner.has_method("spawn_pickups"):
-					spawner.spawn_pickups(internal_gen.hex_map)
+			if multiplayer.is_server():
+				if pickup_spawner_scene:
+					var p_spawner = pickup_spawner_scene.instantiate()
+					add_child(p_spawner)
+					if p_spawner.has_method("spawn_pickups"):
+						p_spawner.spawn_pickups(internal_gen.hex_map)
+				
+				if enemy_spawner_scene:
+					var e_spawner = enemy_spawner_scene.instantiate()
+					add_child(e_spawner)
+					if e_spawner.has_method("spawn_enemies"):
+						e_spawner.spawn_enemies(internal_gen.hex_map)
 			
 	# Add HUD
 	if hud_scene:
@@ -116,9 +123,6 @@ func _on_player_connected(id, info):
 			start_game()
 			_spawn_player.rpc(id, info, spawn_pos)
 		
-		# TEST: Spawn a machine gun near the new player
-		call_deferred("_spawn_test_pickup", spawn_pos + Vector2(250, 0))
-
 @rpc("authority", "call_local", "reliable")
 func _spawn_player(id, info, spawn_pos: Vector2):
 	print("Spawning player: ", id, " at ", spawn_pos)
@@ -147,17 +151,3 @@ func _on_server_disconnected():
 		players_container = null
 	
 	_show_main_menu()
-
-func _spawn_test_pickup(pos: Vector2):
-	if not multiplayer.is_server(): return
-	var pickups_node = find_child("Pickups", true, false)
-	if not pickups_node: return
-	
-	var pickup_pkg = load("res://scenes/objects/pickup.tscn")
-	var pickup = pickup_pkg.instantiate()
-	pickup.pickup_type = "weapon"
-	pickup.pickup_name = "TEST Machine Gun"
-	pickup.item_scene_path = "res://scenes/weapons/machine_gun.tscn"
-	pickup.global_position = pos
-	pickups_node.add_child(pickup, true)
-	print("[TEST] Spawned pickup at ", pos)
