@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://missile_launcher_scene"]
+
+[ext_resource type="Script" path="res://scripts/weapons/missile_launcher.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://missile_projectile_scene" path="res://scenes/projectiles/missile.tscn" id="2_missile"]
+
+[node name="MissileLauncher" type="Node2D"]
+script = ExtResource("1_script")
+projectile_scene = ExtResource("2_missile")
+weapon_name = "Missile Launcher"
+fire_rate = 0.6
+damage = 30.0

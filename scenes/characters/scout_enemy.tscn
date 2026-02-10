@@ -1,0 +1,48 @@
+[gd_scene load_steps=11 format=3 uid="uid://scout_enemy_classic_scene_uid"]
+
+[ext_resource type="PackedScene" uid="uid://bt_enemy_scene_uid" path="res://scenes/characters/bt_enemy.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/characters/scout_enemy.gd" id="2_script"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/flee_player.gd" id="3_flee"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/find_player_target.gd" id="4_find"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/navigate_astar.gd" id="5_astar"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/sequence.gd" id="6_sequence"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/selector.gd" id="7_selector"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/fire_weapons.gd" id="8_fire"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/simple_parallel.gd" id="9_parallel"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/always_running.gd" id="10_run"]
+
+[node name="ScoutEnemy" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+
+[node name="RootSelector" parent="BeehaveTree" index="0"]
+script = ExtResource("7_selector")
+
+[node name="FleeSequence" type="Node" parent="BeehaveTree/RootSelector" index="0"]
+script = ExtResource("6_sequence")
+
+[node name="FleePlayer" type="Node" parent="BeehaveTree/RootSelector/FleeSequence" index="0"]
+script = ExtResource("3_flee")
+flee_distance = 400.0
+
+[node name="AttackParallel" type="Node" parent="BeehaveTree/RootSelector" index="1"]
+script = ExtResource("9_parallel")
+
+[node name="CombatLogic" type="Node" parent="BeehaveTree/RootSelector/AttackParallel" index="0"]
+script = ExtResource("6_sequence")
+
+[node name="FindPlayerTarget" type="Node" parent="BeehaveTree/RootSelector/AttackParallel/CombatLogic" index="0"]
+script = ExtResource("4_find")
+
+[node name="MovementSelector" type="Node" parent="BeehaveTree/RootSelector/AttackParallel/CombatLogic" index="1"]
+script = ExtResource("7_selector")
+
+[node name="NavigateAStar" type="Node" parent="BeehaveTree/RootSelector/AttackParallel/CombatLogic/MovementSelector" index="0"]
+script = ExtResource("5_astar")
+arrival_tolerance = 30.0
+
+[node name="AlwaysRunning" type="Node" parent="BeehaveTree/RootSelector/AttackParallel/CombatLogic/MovementSelector" index="1"]
+script = ExtResource("10_run")
+
+[node name="FireWeapons" type="Node" parent="BeehaveTree/RootSelector/AttackParallel" index="1"]
+script = ExtResource("8_fire")
+max_distance = 700.0

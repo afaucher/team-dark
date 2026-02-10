@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://training_manager_scene"]
+
+[ext_resource type="Script" path="res://scripts/training/training_manager.gd" id="1_script"]
+
+[node name="TrainingManager" type="Node"]
+script = ExtResource("1_script")

@@ -17,29 +17,32 @@ func _ready():
 	_update_hud_status()
 
 func _draw():
-	# Neon Vector Weapon Style
-	var barrel_length = 20.0
-	var barrel_width = 8.0
-	var color = Color(0.0, 2.0, 2.0, 1.0) # Cyan HDR
+	# Premium Neon Vector Pellet Gun
+	var barrel_length = 26.0
+	var barrel_width = 10.0
+	var color = Color(0.1, 1.2, 1.5, 1.0) # Bright Cyan HDR
 	
-	# Barrel (Hollow Rectangle)
+	# 1. Main Tube
 	var points = PackedVector2Array([
 		Vector2(0, -barrel_width/2),
-		Vector2(barrel_length, -barrel_width/2),
-		Vector2(barrel_length, barrel_width/2),
+		Vector2(barrel_length, -2),
+		Vector2(barrel_length, 2),
 		Vector2(0, barrel_width/2),
 		Vector2(0, -barrel_width/2)
 	])
 	
-	# Glow backing
-	draw_polyline(points, color * Color(1, 1, 1, 0.3), 6.0)
-	# Center Fill
+	draw_polyline(points, color * Color(1, 1, 1, 0.2), 10.0)
 	draw_colored_polygon(points, Color.BLACK)
-	# Outline
 	draw_polyline(points, color, 2.0)
-	# High-intensity tip
+	
+	# 2. Internal Energy Rail
+	draw_line(Vector2(2, 0), Vector2(barrel_length - 4, 0), color * 0.4, 4.0)
+	draw_line(Vector2(2, 0), Vector2(barrel_length - 4, 0), Color.WHITE, 1.0)
+	
+	# 3. High-intensity tip
 	if can_fire:
-		draw_circle(Vector2(barrel_length, 0), 2.0, Color.WHITE)
+		draw_circle(Vector2(barrel_length, 0), 2.5, Color.WHITE)
+		draw_circle(Vector2(barrel_length, 0), 4.0, color * 0.3)
 
 
 func trigger(just_pressed: bool, is_held: bool):

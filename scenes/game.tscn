@@ -1,14 +1,13 @@
-[gd_scene load_steps=9 format=3 uid="uid://game_scene_uid"]
+[gd_scene load_steps=9 format=3 uid="uid://bmwppjr1qufsw"]
 
-[ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_manager"]
-[ext_resource type="PackedScene" uid="uid://map_scene_uid" path="res://scenes/map/map.tscn" id="2_map"]
-[ext_resource type="PackedScene" uid="uid://player_scene_uid" path="res://scenes/characters/player.tscn" id="3_player"]
-[ext_resource type="PackedScene" uid="uid://enemy_spawner_scene_uid" path="res://scenes/characters/enemy_spawner.tscn" id="4_spawner"]
-[ext_resource type="PackedScene" uid="uid://main_menu_scene_uid" path="res://scenes/ui/main_menu.tscn" id="5_menu"]
-[ext_resource type="PackedScene" uid="uid://hud_scene_uid" path="res://scenes/ui/hud.tscn" id="6_hud"]
-[ext_resource type="PackedScene" uid="uid://pellet_projectile_scene" path="res://scenes/projectiles/pellet.tscn" id="7_pellet"]
-[ext_resource type="PackedScene" uid="uid://pickup_spawner_scene_uid" path="res://scenes/objects/pickup_spawner.tscn" id="8_pickups"]
-[ext_resource type="PackedScene" uid="uid://particle_spawner_scene" path="res://scenes/effects/particle_spawner.tscn" id="9_particles"]
+[ext_resource type="Script" uid="uid://cshja3jonoklj" path="res://scripts/game_manager.gd" id="1_manager"]
+[ext_resource type="PackedScene" path="res://scenes/map/map.tscn" id="2_map"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy_spawner.tscn" id="4_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/ui/main_menu.tscn" id="5_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" path="res://scenes/objects/pickup_spawner.tscn" id="8_pickups"]
+[ext_resource type="PackedScene" path="res://scenes/effects/particle_spawner.tscn" id="9_particles"]
 
 [node name="Game" type="Node"]
 script = ExtResource("1_manager")
@@ -36,7 +35,7 @@ spawn_path = NodePath("../Pickups")
 [node name="Enemies" type="Node2D" parent="."]
 
 [node name="EnemySpawnerSync" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/characters/enemy.tscn")
+_spawnable_scenes = PackedStringArray("res://scenes/characters/easy_enemy.tscn", "res://scenes/characters/scout_enemy.tscn", "res://scenes/characters/heavy_enemy.tscn", "res://scenes/characters/skittish_enemy.tscn", "res://scenes/characters/mortar_enemy.tscn", "res://scenes/characters/kamikaze_enemy.tscn", "res://scenes/characters/swarm_enemy.tscn")
 spawn_path = NodePath("../Enemies")
 
 [node name="ParticleSpawner" parent="." instance=ExtResource("9_particles")]

@@ -19,26 +19,30 @@ func _ready():
 	_update_hud_status()
 
 func _draw():
-	# Vector Style Shotgun
-	var barrel_length = 22.0
-	var barrel_width = 12.0
-	var color = Color(1.0, 0.5, 0.0, 1.0) # Orange HDR
+	# Premium Neon Vector Double-Barrel Shotgun
+	var barrel_length = 24.0
+	var barrel_width = 14.0
+	var color = Color(1.0, 0.6, 0.2, 1.0) # Gold/Orange HDR
 	
-	var points = PackedVector2Array([
+	# 1. Main Housing (Breach)
+	var breach_points = PackedVector2Array([
 		Vector2(0, -barrel_width/2),
-		Vector2(barrel_length, -barrel_width/2),
-		Vector2(barrel_length, barrel_width/2),
+		Vector2(8, -barrel_width/2),
+		Vector2(8, barrel_width/2),
 		Vector2(0, barrel_width/2),
 		Vector2(0, -barrel_width/2)
 	])
+	draw_polyline(breach_points, color * Color(1, 1, 1, 0.2), 10.0)
+	draw_colored_polygon(breach_points, Color.BLACK)
+	draw_polyline(breach_points, color, 2.5)
 	
-	draw_polyline(points, color * Color(1, 1, 1, 0.3), 6.0)
-	draw_colored_polygon(points, Color.BLACK)
-	draw_polyline(points, color, 2.5)
-	
-	if can_fire:
-		draw_circle(Vector2(barrel_length, 2), 2.0, Color.WHITE)
-		draw_circle(Vector2(barrel_length, -2), 2.0, Color.WHITE)
+	# 2. Dual Barrels
+	for i in [-3.5, 3.5]:
+		var b_rect = Rect2(8, i - 2.5, barrel_length - 8, 5)
+		draw_rect(b_rect, Color.BLACK, true)
+		draw_rect(b_rect, color, false, 2.0)
+		if can_fire:
+			draw_circle(Vector2(barrel_length, i), 2.0, Color.WHITE)
 
 func trigger(just_pressed: bool, is_held: bool):
 	if just_pressed and can_fire:

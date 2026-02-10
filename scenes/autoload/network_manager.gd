@@ -21,8 +21,36 @@ func _ready():
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
 	
 	# Check if we should start as dedicated server (headless or command line arg)
-	if "--server" in OS.get_cmdline_args() or DisplayServer.get_name() == "headless":
+	# But only if no specific join address is provided as an argument
+	var args = OS.get_cmdline_args()
+	
+	# Detect RL Training (godot-rl args)
+	var is_rl_training = false
+	for arg in args:
+		if arg.begins_with("--speedup") or arg.begins_with("--env_seed") or arg.begins_with("--port") or arg.begins_with("--inference"):
+			is_rl_training = true
+			break
+			
+	if is_rl_training:
+		print("[Network] RL Training Mode detected. Dedicating networking disabled.")
+		return
+	
+	var is_headless = DisplayServer.get_name() == "headless"
+	var force_server = "--server" in args
+	
+	var join_target = ""
+	for arg in args:
+		if arg == "localhost" or arg.find(".") > -1:
+			join_target = arg
+			break
+			
+	if (force_server or is_headless) and join_target == "":
 		create_server()
+	elif join_target != "":
+		print("[Network] CLI Join detected: ", join_target)
+		# Delay join slightly to ensure everything is initialized
+		await get_tree().create_timer(0.1).timeout
+		join_game(join_target)
 
 # Dedicated server mode (headless, no local player)
 func create_server():
@@ -35,6 +63,12 @@ func create_server():
 		return false
 	multiplayer.multiplayer_peer = peer
 	print("Dedicated Server started on port ", SERVER_PORT)
+	
+	# Auto-transition server to game scene
+	if get_tree().current_scene.name == "MainMenu":
+		print("[Network] Server transitioning to game scene...")
+		get_tree().change_scene_to_file.call_deferred("res://scenes/game.tscn")
+		
 	return true
 
 # Listen server mode (host + local player)
@@ -91,6 +125,10 @@ func _on_player_disconnected(id):
 
 func _on_connected_ok():
 	print("Successfully connected to server")
+	# Automate scene switch for ENet joins (CLI or direct join)
+	if get_tree().current_scene.name == "MainMenu":
+		print("[Network] Transitioning to game scene...")
+		get_tree().change_scene_to_file("res://scenes/game.tscn")
 	connected_to_server.emit()
 
 func _on_connected_fail():

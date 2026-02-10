@@ -2,8 +2,8 @@ extends Node
 class_name EnemySpawner
 
 @export var enemy_scene: PackedScene
-@export var cluster_count: int = 15
-@export var solo_count: int = 25
+@export var cluster_count: int = 10
+@export var solo_count: int = 15
 
 var rng = RandomNumberGenerator.new()
 
@@ -34,9 +34,14 @@ func spawn_enemies(hex_map: Dictionary):
 		_spawn_enemy(pos, 2, round_color, enemies_node) # 2 = HEAVY
 
 	# 3. Spawn Basic (Gray/Easy) everywhere else
-	for i in range(20):
+	for i in range(solo_count):
 		var pos = _get_random_flat_pos(hex_map, hex_keys)
 		_spawn_enemy(pos, 0, Color.GRAY, enemies_node) # 0 = EASY
+		
+	# 4. Spawn Swarm!
+	for i in range(12): # 12 tiny swarms
+		var pos = _get_random_flat_pos(hex_map, hex_keys)
+		_spawn_enemy(pos, 3, Color.LIME_GREEN, enemies_node) # 3 = SWARM
 
 func _get_random_flat_pos(hex_map, keys) -> Vector2:
 	# Try a few times to find a "safe" reachable spot? 
@@ -51,9 +56,28 @@ func _spawn_cluster(center: Vector2, color: Color, parent: Node):
 		_spawn_enemy(center + offset, 1, color, parent) # 1 = SCOUT
 
 func _spawn_enemy(pos: Vector2, tier: int, color: Color, parent: Node):
-	if not enemy_scene: return
-	var enemy = enemy_scene.instantiate()
-	enemy.global_position = pos
-	enemy.tier = tier
-	enemy.color_theme = color
+	var r = rng.randf()
+	var chosen_scene: PackedScene = null
+	
+	match tier:
+		0: # EASY / BASIC
+			chosen_scene = preload("res://scenes/characters/easy_enemy.tscn")
+		1: # SCOUT / CLUSTER
+			if r < 0.3: chosen_scene = preload("res://scenes/characters/skittish_enemy.tscn")
+			elif r < 0.6: chosen_scene = preload("res://scenes/characters/kamikaze_enemy.tscn")
+			else: chosen_scene = preload("res://scenes/characters/scout_enemy.tscn")
+		2: # HEAVY
+			if r < 0.4: chosen_scene = preload("res://scenes/characters/mortar_enemy.tscn")
+			else: chosen_scene = preload("res://scenes/characters/heavy_enemy.tscn")
+		3: # SWARM (New tier)
+			chosen_scene = preload("res://scenes/characters/swarm_enemy.tscn")
+			
+	if not chosen_scene: return
+	
+	var enemy = chosen_scene.instantiate()
+	if "color_theme" in enemy:
+		enemy.color_theme = color
+	
+	# Add to tree BEFORE setting position for some synchronization types
 	parent.add_child(enemy, true)
+	enemy.global_position = pos

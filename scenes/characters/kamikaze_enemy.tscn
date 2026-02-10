@@ -1,0 +1,52 @@
+[gd_scene load_steps=12 format=3 uid="uid://kamikaze_enemy_scene_uid"]
+
+[ext_resource type="PackedScene" uid="uid://bt_enemy_scene_uid" path="res://scenes/characters/bt_enemy.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/characters/kamikaze_enemy.gd" id="2_script"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/conditions/is_player_near.gd" id="3_near"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/charge_target.gd" id="4_charge"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/patrol_random.gd" id="5_patrol"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/scan_area.gd" id="6_scan"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/sequence.gd" id="7_sequence"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/selector.gd" id="8_selector"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/detonate_action.gd" id="9_detonate"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/simple_parallel.gd" id="10_parallel"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/fire_weapons.gd" id="11_fire"]
+
+[node name="KamikazeEnemy" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+
+[node name="RootSelector" parent="BeehaveTree" index="0"]
+script = ExtResource("8_selector")
+
+[node name="AttackSelector" type="Node" parent="BeehaveTree/RootSelector" index="0"]
+script = ExtResource("8_selector")
+
+[node name="DetonateAction" type="Node" parent="BeehaveTree/RootSelector/AttackSelector" index="0"]
+script = ExtResource("9_detonate")
+detonation_range = 50.0
+
+[node name="ChargeParallel" type="Node" parent="BeehaveTree/RootSelector/AttackSelector" index="1"]
+script = ExtResource("10_parallel")
+
+[node name="ChaseSequence" type="Node" parent="BeehaveTree/RootSelector/AttackSelector/ChargeParallel" index="0"]
+script = ExtResource("7_sequence")
+
+[node name="IsPlayerNear" type="Node" parent="BeehaveTree/RootSelector/AttackSelector/ChargeParallel/ChaseSequence" index="0"]
+script = ExtResource("3_near")
+distance = 800.0
+
+[node name="ChargeTarget" type="Node" parent="BeehaveTree/RootSelector/AttackSelector/ChargeParallel/ChaseSequence" index="1"]
+script = ExtResource("4_charge")
+charge_speed_mult = 2.5
+
+[node name="FireWeapons" type="Node" parent="BeehaveTree/RootSelector/AttackSelector/ChargeParallel" index="1"]
+script = ExtResource("11_fire")
+
+[node name="IdleSelector" type="Node" parent="BeehaveTree/RootSelector" index="1"]
+script = ExtResource("8_selector")
+
+[node name="ScanArea" type="Node" parent="BeehaveTree/RootSelector/IdleSelector" index="0"]
+script = ExtResource("6_scan")
+
+[node name="PatrolRandom" type="Node" parent="BeehaveTree/RootSelector/IdleSelector" index="1"]
+script = ExtResource("5_patrol")

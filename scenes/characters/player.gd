@@ -5,6 +5,7 @@ const DuckNameGenerator = preload("res://scripts/duck_names.gd")
 const SPEED = 600.0
 const ACCEL = 2500.0
 const FRICTION = 2000.0
+const ROTATION_SPEED = 15.0 # rad/s for smoothing
 
 @export var player_id: int = 1:
 	set(id):
@@ -17,6 +18,8 @@ const FRICTION = 2000.0
 @export var player_name: String = ""
 @export var default_weapon_scene: PackedScene
 @onready var mounts = [$MountLeft, $MountRight, $MountFront]
+var last_rotation: float = 0.0
+var angular_velocity: float = 0.0 # rad/s
 @onready var name_label = get_node_or_null("NameLabel")
 
 # Pickup System
@@ -25,6 +28,23 @@ const PICKUP_RANGE = 100.0
 var mount_hold_times = [0.0, 0.0, 0.0] # Left, Right, Front
 var current_mount_weapons = [null, null, null] # PackedScenes for dropping
 var nearest_pickup = null
+
+# AI System
+enum AIMode { MANUAL, HARDCODED, TRAINED }
+@export var ai_mode: AIMode = AIMode.MANUAL:
+	set(val):
+		ai_mode = val
+		_update_ai_controller()
+
+var ai_controller: Node = null
+
+# Input Buffers (Shared between Manual and AI)
+var move_input: Vector2 = Vector2.ZERO
+var aim_input: Vector2 = Vector2.ZERO
+var fire_just_pressed: Array[bool] = [false, false, false]
+var fire_held: Array[bool] = [false, false, false]
+var fire_all_just: bool = false
+var fire_all_held: bool = false
 
 func _ready():
 	print("Player script loaded for ID: ", player_id, " (Authority: ", is_multiplayer_authority(), ")")
@@ -66,6 +86,25 @@ func _ready():
 		equip_weapon(2, "res://scenes/weapons/pellet_gun.tscn") # Front mount
 	else:
 		print("ERROR: No default weapon scene found!")
+
+	_update_ai_controller()
+
+func _update_ai_controller():
+	if ai_controller:
+		ai_controller.queue_free()
+		ai_controller = null
+		
+	match ai_mode:
+		AIMode.HARDCODED:
+			# We'll implement PlayerAutoplayController later
+			var script = load("res://scripts/ai/controllers/player_autoplay_controller.gd")
+			if script:
+				ai_controller = Node.new()
+				ai_controller.set_script(script)
+				add_child(ai_controller)
+		AIMode.TRAINED:
+			# For Godot RL Agents
+			pass
 
 @rpc("any_peer", "call_local", "reliable")
 func equip_weapon(mount_index: int, weapon_path: String = ""):
@@ -118,7 +157,10 @@ func drop_weapon(mount_index: int):
 	
 	# Get name from a temporary instance
 	var temp = weapon_scene.instantiate()
-	pickup.pickup_name = temp.weapon_name if "weapon_name" in temp else "Weapon"
+	if "utility_name" in temp:
+		pickup.pickup_name = temp.utility_name
+	else:
+		pickup.pickup_name = temp.weapon_name if "weapon_name" in temp else "Weapon"
 	temp.free()
 	
 	pickup.global_position = global_position + Vector2.from_angle(randf() * TAU) * 50.0
@@ -142,7 +184,10 @@ func swap_weapon(mount_index: int, new_weapon_path: String):
 		
 		# Get name
 		var temp = old_weapon_scene.instantiate()
-		pickup.pickup_name = temp.weapon_name if "weapon_name" in temp else "Dropped Weapon"
+		if "utility_name" in temp:
+			pickup.pickup_name = temp.utility_name
+		else:
+			pickup.pickup_name = temp.weapon_name if "weapon_name" in temp else "Dropped Weapon"
 		temp.free()
 		
 		# Spawn behind the player
@@ -165,50 +210,64 @@ func add_ammo(amount: int):
 func _physics_process(delta):
 	if is_multiplayer_authority():
 		if not is_dead:
-			_handle_input(delta)
+			_gather_inputs(delta)
+			_apply_actions(delta)
 	
 	if not is_dead:
 		move_and_slide()
 
-func _handle_input(delta):
-	var direction = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if direction:
-		velocity = velocity.move_toward(direction * SPEED, ACCEL * delta)
+func _gather_inputs(delta):
+	if ai_mode == AIMode.MANUAL:
+		move_input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		
+		# Hybrid Aiming: Stick/Keyboard vs Mouse
+		var stick_input = Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+		if stick_input.length() > 0.1:
+			aim_input = stick_input
+		else:
+			# If no stick input, point towards mouse
+			var mouse_pos = get_global_mouse_position()
+			aim_input = (mouse_pos - global_position).normalized()
+		
+		fire_just_pressed[0] = Input.is_action_just_pressed("fire_left")
+		fire_held[0] = Input.is_action_pressed("fire_left")
+		fire_just_pressed[1] = Input.is_action_just_pressed("fire_right")
+		fire_held[1] = Input.is_action_pressed("fire_right")
+		fire_just_pressed[2] = Input.is_action_just_pressed("fire_front")
+		fire_held[2] = Input.is_action_pressed("fire_front")
+		
+		fire_all_just = Input.is_action_just_pressed("fire_all")
+		fire_all_held = Input.is_action_pressed("fire_all")
+	elif ai_controller:
+		ai_controller.update_actions(delta)
+		move_input = ai_controller.move_vector
+		aim_input = ai_controller.aim_vector
+		fire_just_pressed = ai_controller.fire_just_pressed
+		fire_held = ai_controller.fire_held
+		fire_all_just = ai_controller.fire_all_just
+		fire_all_held = ai_controller.fire_all_held
+
+func _apply_actions(delta):
+	if move_input:
+		velocity = velocity.move_toward(move_input * SPEED, ACCEL * delta)
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 	
-	# Aiming (for mounts/visuals)
-	# Use raw_aim from _physics_process if possible, but Input here works too
-	var aim_dir = Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	if aim_dir.length() > 0.1:
-		rotation = aim_dir.angle()
-		# print("Rotation set to: ", rotation)
+	if aim_input.length() > 0.1:
+		var target_rot = aim_input.angle()
+		rotation = lerp_angle(rotation, target_rot, delta * ROTATION_SPEED)
 	
-	# Firing - Check both Just Pressed (for semi-auto) and Pressed (for auto/charging)
-	# Left Mount (0)
-	var fire_left_just = Input.is_action_just_pressed("fire_left")
-	var fire_left_held = Input.is_action_pressed("fire_left")
-	if fire_left_just or fire_left_held:
-		_fire_mount(0, fire_left_just, fire_left_held)
-		
-	# Right Mount (1)
-	var fire_right_just = Input.is_action_just_pressed("fire_right")
-	var fire_right_held = Input.is_action_pressed("fire_right")
-	if fire_right_just or fire_right_held:
-		_fire_mount(1, fire_right_just, fire_right_held)
-		
-	# Front Mount (2)
-	var fire_front_just = Input.is_action_just_pressed("fire_front")
-	var fire_front_held = Input.is_action_pressed("fire_front")
-	if fire_front_just or fire_front_held:
-		_fire_mount(2, fire_front_just, fire_front_held)
-		
-	# Fire All (Right Trigger)
-	var fire_all_just = Input.is_action_just_pressed("fire_all")
-	var fire_all_held = Input.is_action_pressed("fire_all")
+	# Track angular velocity (rad/s)
+	angular_velocity = (rotation - last_rotation) / delta
+	last_rotation = rotation
+	
+	# Firing
+	for i in range(3):
+		if fire_just_pressed[i] or fire_held[i]:
+			_fire_mount(i, fire_just_pressed[i], fire_held[i])
+			
 	if fire_all_just or fire_all_held:
 		for i in range(3):
-			# Skip passive items for "Fire All"
 			var weapon = current_mount_weapons[i]
 			if weapon:
 				var temp = weapon.instantiate()
@@ -216,23 +275,35 @@ func _handle_input(delta):
 				temp.free()
 				if is_passive:
 					continue
-					
 			_fire_mount(i, fire_all_just, fire_all_held)
 
-	# Update Pickup Hold timers
 	_handle_pickup_timers(delta)
 
 func _handle_pickup_timers(delta):
-	# Map actions to indices
-	var actions = ["fire_left", "fire_right", "fire_front"]
-	
+	var actions_pressed = [false, false, false]
+	if ai_mode == AIMode.MANUAL:
+		actions_pressed[0] = Input.is_action_pressed("fire_left")
+		actions_pressed[1] = Input.is_action_pressed("fire_right")
+		actions_pressed[2] = Input.is_action_pressed("fire_front")
+	else:
+		actions_pressed = fire_held
+		
+	# Auto-pickup Gems if very close
+	if nearest_pickup and nearest_pickup.pickup_type == "gem":
+		var dist = global_position.distance_to(nearest_pickup.global_position)
+		if dist < 120.0: # Increased range slightly for safety
+			if multiplayer.is_server():
+				print("[Player] Auto-picking gem at dist: ", dist)
+			_request_pickup(nearest_pickup.get_path(), 2) # Front mount as default
+			return
+
 	for i in range(3):
-		if Input.is_action_pressed(actions[i]) and nearest_pickup:
+		if actions_pressed[i] and nearest_pickup:
 			mount_hold_times[i] += delta
 			if mount_hold_times[i] >= PICKUP_HOLD_DURATION:
 				_request_pickup(nearest_pickup.get_path(), i)
 				mount_hold_times[i] = -1.0 # Prevent multiple triggers
-		elif !Input.is_action_pressed(actions[i]):
+		elif !actions_pressed[i]:
 			mount_hold_times[i] = 0.0
 
 func _request_pickup(pickup_path: NodePath, mount_index: int):
@@ -352,24 +423,9 @@ func _draw():
 		if aim_dir.length() > 0:
 			draw_line(Vector2.ZERO, aim_dir * 50, Color.BLUE, 4.0)
 		
-		# Authority Debug
-		var auth_color = Color.GREEN if is_multiplayer_authority() else Color.RED
-		draw_circle(Vector2(0, -40), 5.0, auth_color)
+		# VISUALIZE ACTUAL ROTATION
+		draw_line(Vector2.ZERO, Vector2.RIGHT.rotated(rotation) * 100.0, Color.MAGENTA, 2.0)
 		
-		# Projectile Tracing
-		var projectiles = get_tree().get_nodes_in_group("projectiles")
-		for proj in projectiles:
-			var rel_pos = to_local(proj.global_position)
-			var dist = rel_pos.length()
-			
-			draw_line(Vector2.ZERO, rel_pos, Color(1, 1, 0, 0.8), 2.0) 
-			
-			if dist > 500:
-				var arrow_pos = rel_pos.limit_length(200)
-				draw_circle(arrow_pos, 10.0, Color.RED)
-				draw_line(Vector2.ZERO, arrow_pos, Color.RED, 4.0)
-			
-			draw_circle(rel_pos, 8.0, Color.YELLOW)
 
 @export var max_hp: float = 100.0
 var current_hp: float = 100.0:
@@ -448,14 +504,18 @@ func die():
 	# Notify GameManager to handle respawn timer (Server only)
 	# Notify GameManager to handle respawn timer (Server only)
 	if multiplayer.is_server():
-		var gm = get_tree().root.find_child("Game", true, false)
-		if not gm:
-			gm = get_tree().root.find_child("GameManager", true, false)
+		var gm = get_tree().get_first_node_in_group("managers")
+		if not gm: gm = get_tree().root.find_child("Game", true, false)
+		if not gm: gm = get_tree().root.find_child("GameManager", true, false)
+		if not gm: gm = get_tree().root.find_child("TrainingManager", true, false)
+		if not gm: gm = get_tree().current_scene
 			
 		if gm and gm.has_method("on_player_died"):
 			gm.on_player_died(player_id)
 		else:
-			print("CRITICAL ERROR: GameManager not found!")
+			var err = "CRITICAL ERROR: No Manager found (Server)."
+			if gm: err = "CRITICAL ERROR: Manager found (" + gm.name + ") but missing on_player_died!"
+			print(err)
 
 @rpc("any_peer", "call_local", "reliable")
 func respawn(pos: Vector2):

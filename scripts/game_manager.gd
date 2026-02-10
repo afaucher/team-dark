@@ -15,7 +15,16 @@ var hud_instance = null
 const MAX_GEMS: int = 3
 var collected_gems: int = 0
 
+var pathfinder = null
+
 func _ready():
+	add_to_group("managers")
+	
+	# Setup Pathfinding
+	pathfinder = Node.new()
+	pathfinder.name = "Pathfinding"
+	pathfinder.set_script(load("res://scripts/training/pathfinding_manager.gd"))
+	add_child(pathfinder)
 	# Configure Projectile Spawner
 	var spawner = get_node_or_null("ProjectileSpawner")
 	if spawner:
@@ -28,7 +37,27 @@ func _ready():
 	if multiplayer.multiplayer_peer and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 		_setup_steam_session()
 	else:
-		_show_main_menu()
+		# Check for CLI join address (e.g., "localhost")
+		var args = OS.get_cmdline_args()
+		var join_target = ""
+		for arg in args:
+			if arg == "localhost" or arg.find(".") > -1:
+				join_target = arg
+				break
+		
+		if join_target != "":
+			print("[Game] CLI Join detected: ", join_target)
+			NetworkManager.join_game(join_target)
+			# Hide menu nodes if they exist
+			for child in get_children():
+				if child is Control: child.visible = false
+		elif multiplayer.is_server():
+			# Dedicated server - auto-start the game
+			print("[Game] Dedicated server detected, auto-starting game...")
+			await get_tree().process_frame
+			start_game()
+		else:
+			_show_main_menu()
 
 func _setup_steam_session():
 	print("[Game] Steam session detected, skipping internal menu.")
@@ -106,17 +135,23 @@ func _load_map(seed_val: int):
 			map_gen.queue_redraw()
 			
 			# Spawn Pickups (Server only)
-			if multiplayer.is_server():
-				if pickup_spawner_scene:
-					var p_spawner = pickup_spawner_scene.instantiate()
-					add_child(p_spawner)
-					if p_spawner.has_method("spawn_pickups"):
+			if pickup_spawner_scene:
+				var p_spawner = pickup_spawner_scene.instantiate()
+				add_child(p_spawner)
+				if p_spawner.has_method("spawn_pickups"):
+					if multiplayer.is_server(): # Only server calls the spawn method
 						p_spawner.spawn_pickups(internal_gen.hex_map)
 				
-				if enemy_spawner_scene:
-					var e_spawner = enemy_spawner_scene.instantiate()
-					add_child(e_spawner)
-					if e_spawner.has_method("spawn_enemies"):
+			if enemy_spawner_scene:
+				var e_spawner = enemy_spawner_scene.instantiate()
+				add_child(e_spawner)
+				
+				# Update pathfinding graph before spawning
+				if pathfinder and pathfinder.has_method("update_graph"):
+					pathfinder.update_graph(internal_gen.hex_map)
+				
+				if e_spawner.has_method("spawn_enemies"):
+					if multiplayer.is_server(): # Only server calls the spawn method
 						e_spawner.spawn_enemies(internal_gen.hex_map)
 			
 	# Add HUD
@@ -154,7 +189,7 @@ func _on_player_connected(id, info):
 		
 @rpc("authority", "call_local", "reliable")
 func _spawn_player(id, info, spawn_pos: Vector2):
-	print("Spawning player: ", id, " at ", spawn_pos)
+	print("[Game] _spawn_player called for ID: ", id, " at ", spawn_pos)
 	if not players_container:
 		players_container = Node2D.new()
 		players_container.name = "Players"
@@ -162,12 +197,19 @@ func _spawn_player(id, info, spawn_pos: Vector2):
 		add_child(players_container)
 		
 	if players_container.has_node(str(id)):
+		print("[Game] Player ", id, " already exists, skipping spawn.")
 		return
 
 	var p = player_scene.instantiate()
 	p.name = str(id)
 	p.player_id = id
 	p.position = spawn_pos
+	
+	# Check for autoplay flag
+	if OS.get_cmdline_args().has("--autoplay"):
+		p.ai_mode = 1 # HARDCODED
+		print("Autoplay enabled for Player ", id)
+		
 	players_container.add_child(p, true)
 
 func _on_server_disconnected():

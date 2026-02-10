@@ -24,8 +24,12 @@ const HEALTH_BG = preload("res://resources/ui/health_bg_style.tres")
 func _process(_delta):
 	if fps_label:
 		fps_label.text = "FPS: " + str(Engine.get_frames_per_second())
+	
+	# Request redraw for indicators
+	$Control.queue_redraw()
 
 func _ready():
+	process_mode = Node.PROCESS_MODE_ALWAYS # Keep HUD alive during RL training pauses
 	# Apply Styles
 	mount_left.add_theme_stylebox_override("panel", PANEL_STYLE)
 	mount_right.add_theme_stylebox_override("panel", PANEL_STYLE)
@@ -33,6 +37,9 @@ func _ready():
 	
 	health_bar.add_theme_stylebox_override("bg", HEALTH_BG)
 	health_bar.add_theme_stylebox_override("fill", HEALTH_FILL)
+	
+	# Connect _draw to Control
+	$Control.draw.connect(_on_control_draw)
 
 
 func update_health(ratio: float):
@@ -108,3 +115,82 @@ func update_gems(count: int, max_gems: int):
 		gem_label.modulate = Color(0, 1, 0) # Green
 	else:
 		gem_label.modulate = Color(1, 0, 1) # Magenta
+
+func _on_control_draw():
+	# Draw off-screen indicators for pickups
+	var players = get_tree().get_nodes_in_group("players")
+	if players.size() == 0: return
+	var player = players[0]
+
+	var camera = get_viewport().get_camera_2d()
+	if not camera: return
+
+	var screen_size = get_viewport().get_visible_rect().size
+	var margin = 40.0
+	
+	var pickups = get_tree().get_nodes_in_group("pickups")
+	var counts = {"gem": 0, "weapon": 0, "health": 0, "utility": 0, "ammo": 0, "unknown": 0}
+	
+	for pickup in pickups:
+		if not is_instance_valid(pickup) or not pickup.is_inside_tree(): continue
+		
+		var type = "unknown"
+		if "pickup_type" in pickup:
+			type = pickup.pickup_type
+		
+		if counts.has(type): counts[type] += 1
+		else: counts["unknown"] += 1
+
+		# Get screen position
+		var canvas_transform = get_viewport().get_canvas_transform()
+		var screen_pos = canvas_transform * pickup.global_position
+		
+		if screen_pos.x < 0 or screen_pos.x > screen_size.x or \
+		   screen_pos.y < 0 or screen_pos.y > screen_size.y:
+			# OFF SCREEN - Draw Edge Dot
+			var indicator_pos = Vector2()
+			indicator_pos.x = clamp(screen_pos.x, margin, screen_size.x - margin)
+			indicator_pos.y = clamp(screen_pos.y, margin, screen_size.y - margin)
+			
+			# Indicator color
+			var color = Color(1, 1, 1) # Default
+			var dot_size = 5.0
+			match type:
+				"gem": 
+					color = Color(1, 0, 1)
+					dot_size = 7.0 # Make gems larger
+				"weapon": color = Color(0, 1, 1)
+				"utility": color = Color(0.5, 0, 1) # Purple for utilities
+				"health": color = Color(1, 0, 0)
+				"ammo": color = Color(1, 1, 0)
+			
+			# Draw indicator with a small drop shadow
+			$Control.draw_circle(indicator_pos + Vector2(2,2), dot_size + 1.0, Color(0,0,0, 0.5))
+			$Control.draw_circle(indicator_pos, dot_size, color)
+	
+	# --- EXTRACTION INDICATOR ---
+	var game_manager = get_tree().current_scene
+	if game_manager and "collected_gems" in game_manager:
+		if game_manager.collected_gems >= game_manager.MAX_GEMS:
+			var extraction = get_tree().current_scene.find_child("ExtractionPoint", true, false)
+			if extraction and is_instance_valid(extraction):
+				var canvas_transform = get_viewport().get_canvas_transform()
+				var screen_pos = canvas_transform * extraction.global_position
+				
+				if screen_pos.x < 0 or screen_pos.x > screen_size.x or \
+				   screen_pos.y < 0 or screen_pos.y > screen_size.y:
+					var indicator_pos = Vector2()
+					indicator_pos.x = clamp(screen_pos.x, margin, screen_size.x - margin)
+					indicator_pos.y = clamp(screen_pos.y, margin, screen_size.y - margin)
+					
+					# Draw a distinct Green Hex or Triangle for Exit
+					var pts = []
+					var sides = 6
+					var size = 12.0
+					for i in range(sides):
+						var angle = i * TAU / sides
+						pts.append(indicator_pos + Vector2(cos(angle), sin(angle)) * size)
+					
+					$Control.draw_colored_polygon(pts, Color.GREEN)
+					$Control.draw_polyline(pts, Color.WHITE, 2.0)
+	

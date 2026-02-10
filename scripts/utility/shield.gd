@@ -1,6 +1,6 @@
 extends Node2D
 
-@export var weapon_name: String = "Energy Shield"
+@export var utility_name: String = "Energy Shield"
 @export var duration: float = 3.0
 @export var cooldown: float = 8.0
 @export var shield_radius: float = 80.0

@@ -15,25 +15,10 @@ mono_crash.*.json
 .DS_Store
 Thumbs.db
 
-# Log files
-*.log
-logs/
-
-# Screenshots and automated captures
-screenshots/
-**/screenshots/
-
-# Build output
+# Build and Env
 build/
-
-# Temp files
-godot_help.txt
-godotsteam_temp/
-temp_extraction/
-temp_*.zip
-steam_app_id.txt
-steam_appid.txt
-
-# External Tools and Dependencies
-external/
-addons/godotsteam/
+python_gpu/
+ai_venv/
+*.zip
+logs/
+!models/*.onnx

@@ -1,5 +1,7 @@
-class_name Enemy
 extends CharacterBody2D
+
+signal enemy_damaged(amount: float, attacker_id: int)
+signal enemy_killed(attacker_id: int)
 
 enum Tier { EASY, SCOUT, HEAVY }
 
@@ -23,6 +25,7 @@ var current_hp: float
 
 func _ready():
 	current_hp = max_hp
+	collision_layer = 4 # Layer 3: Enemy
 	add_to_group("enemies")
 	
 	if multiplayer.is_server():
@@ -121,13 +124,16 @@ func take_damage(amount: float, attacker_id: int):
 	if not multiplayer.is_server(): return
 	
 	current_hp -= amount
+	enemy_damaged.emit(amount, attacker_id)
+	
 	# Spawn damage particles (50% chance)
 	ParticleSpawner.spawn_damage(global_position)
 	if current_hp <= 0:
-		die()
+		die(attacker_id)
 
-func die():
+func die(attacker_id: int = -1):
 	print("Enemy died")
+	enemy_killed.emit(attacker_id)
 	# Death explosion - use the enemy's color theme
 	ParticleSpawner.spawn_death(global_position, color_theme)
 	queue_free()

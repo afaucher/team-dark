@@ -2,7 +2,7 @@ extends Area2D
 
 @export var speed: float = 800.0
 @export var damage: float = 10.0
-@export var max_distance: float = 2000.0
+@export var max_distance: float = 1200.0
 
 var traveled_distance: float = 0.0
 
@@ -22,12 +22,29 @@ func _ready():
 	get_tree().create_timer(3.0).timeout.connect(queue_free)
 
 func _physics_process(delta):
-	var move_step = speed * delta
-	position += Vector2.RIGHT.rotated(rotation) * move_step
-	traveled_distance += move_step
-	
 	if spawn_protection > 0:
 		spawn_protection -= delta
+
+	var move_step = speed * delta
+	var direction = Vector2.RIGHT.rotated(rotation)
+	var next_pos = global_position + direction * move_step
+	
+	# Raycast Check (CCD)
+	# Mask 7 = Layer 1 (World), 2 (Player), 3 (Enemy)
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsRayQueryParameters2D.create(global_position, next_pos)
+	query.exclude = [self, owner_node] if owner_node else [self]
+	query.collision_mask = 7
+	
+	var result = space_state.intersect_ray(query)
+	if result:
+		# COLLISION DETECTED
+		global_position = result.position
+		_on_body_entered(result.collider)
+		return
+
+	position = next_pos
+	traveled_distance += move_step
 	
 	if traveled_distance > max_distance:
 		queue_free()
@@ -82,19 +99,7 @@ func _draw():
 	
 	# --- Debug Overlay (Toggle with F3) ---
 	if DebugManager.show_debug:
-		var time = Time.get_ticks_msec() / 1000.0
-		var pulse = (sin(time * 10.0) + 1.0) * 0.5
-		var debug_color = Color(1.0, 0, 0, 0.8) # Red
-		
-		# Pulsing Circle
-		draw_arc(Vector2.ZERO, 20.0 + pulse * 10.0, 0, TAU, 32, debug_color, 2.0)
-		
-		# Rotating Crosshair
-		var ang = time * 5.0
-		for i in range(4):
-			var v = Vector2.RIGHT.rotated(ang + i * PI/2) * 30.0
-			draw_line(v * 0.5, v, debug_color, 3.0)
-		
-		# Authority Label
+		# Draw just a small authority indicator or nothing? 
+		# User wanted them removed. I'll leave a single small dot.
 		var label = "S" if is_multiplayer_authority() else "C"
-		draw_string(ThemeDB.fallback_font, Vector2(12, -12), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.YELLOW)
+		draw_string(ThemeDB.fallback_font, Vector2(8, -8), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.YELLOW)

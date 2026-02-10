@@ -17,12 +17,22 @@ func _ready():
 	_update_hud_status()
 
 func _draw():
-	# Vector Style Grenade Launcher
-	var barrel_length = 25.0
-	var barrel_width = 14.0
-	var color = Color(1.0, 0.2, 0.2, 1.0) # Bright Red HDR
+	# Premium Neon Vector Grenade Launcher
+	var barrel_length = 28.0
+	var barrel_width = 16.0
+	var drum_radius = 10.0
+	var color = Color(1.0, 0.3, 0.4, 1.0) # Pinkish Red HDR
 	
-	var points = PackedVector2Array([
+	# 1. Drum Magazine (under barrel)
+	draw_circle(Vector2(6, 4), drum_radius, Color.BLACK)
+	draw_arc(Vector2(6, 4), drum_radius, 0, TAU, 16, color, 2.0)
+	# Drum details
+	for i in range(6):
+		var angle = i * TAU / 6
+		draw_circle(Vector2(6, 4) + Vector2.from_angle(angle) * 6, 2, color * 0.5)
+	
+	# 2. Heavy Barrel
+	var barrel_points = PackedVector2Array([
 		Vector2(0, -barrel_width/2),
 		Vector2(barrel_length, -barrel_width/2),
 		Vector2(barrel_length, barrel_width/2),
@@ -30,12 +40,18 @@ func _draw():
 		Vector2(0, -barrel_width/2)
 	])
 	
-	draw_polyline(points, color * Color(1, 1, 1, 0.3), 8.0)
-	draw_colored_polygon(points, Color.BLACK)
-	draw_polyline(points, color, 3.0)
+	draw_polyline(barrel_points, color * Color(1, 1, 1, 0.2), 10.0)
+	draw_colored_polygon(barrel_points, Color.BLACK)
+	draw_polyline(barrel_points, color, 3.0)
 	
+	# Barrel detailing (Vent holes)
+	for i in range(3):
+		draw_rect(Rect2(8 + i*6, -3, 3, 6), color * 0.4, true)
+	
+	# 3. Muzzle / Ready indicator
 	if can_fire:
-		draw_rect(Rect2(barrel_length - 4, -4, 4, 8), Color.WHITE)
+		draw_rect(Rect2(barrel_length - 2, -barrel_width/2 - 2, 4, barrel_width + 4), Color.WHITE)
+		draw_rect(Rect2(barrel_length - 2, -barrel_width/2 - 2, 4, barrel_width + 4), color, false, 1.0)
 
 func trigger(just_pressed: bool, is_held: bool):
 	if just_pressed and can_fire:

@@ -1,0 +1,45 @@
+[gd_scene load_steps=11 format=3 uid="uid://skittish_enemy_scene_uid"]
+
+[ext_resource type="PackedScene" uid="uid://bt_enemy_scene_uid" path="res://scenes/characters/bt_enemy.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/characters/skittish_enemy.gd" id="2_script"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/flee_player.gd" id="3_flee"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/patrol_random.gd" id="4_patrol"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/sequence.gd" id="5_sequence"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/selector.gd" id="6_selector"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/fire_weapons.gd" id="7_fire"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/simple_parallel.gd" id="8_parallel"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/find_player_target.gd" id="9_find"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/always_running.gd" id="10_run"]
+
+[node name="SkittishEnemy" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+
+[node name="RootSelector" parent="BeehaveTree" index="0"]
+script = ExtResource("6_selector")
+
+[node name="FleeParallel" type="Node" parent="BeehaveTree/RootSelector" index="0"]
+script = ExtResource("8_parallel")
+
+[node name="TacticalLogic" type="Node" parent="BeehaveTree/RootSelector/FleeParallel" index="0"]
+script = ExtResource("5_sequence")
+
+[node name="FindPlayerTarget" type="Node" parent="BeehaveTree/RootSelector/FleeParallel/TacticalLogic" index="0"]
+script = ExtResource("9_find")
+
+[node name="FleeSelector" type="Node" parent="BeehaveTree/RootSelector/FleeParallel/TacticalLogic" index="1"]
+script = ExtResource("6_selector")
+
+[node name="FleePlayer" type="Node" parent="BeehaveTree/RootSelector/FleeParallel/TacticalLogic/FleeSelector" index="0"]
+script = ExtResource("3_flee")
+flee_distance = 600.0
+
+[node name="AlwaysRunning" type="Node" parent="BeehaveTree/RootSelector/FleeParallel/TacticalLogic/FleeSelector" index="1"]
+script = ExtResource("10_run")
+
+[node name="FireWeapons" type="Node" parent="BeehaveTree/RootSelector/FleeParallel" index="1"]
+script = ExtResource("7_fire")
+max_distance = 800.0
+
+[node name="PatrolRandom" type="Node" parent="BeehaveTree/RootSelector" index="1"]
+script = ExtResource("4_patrol")
+patrol_radius = 800.0

@@ -1,0 +1,37 @@
+[gd_scene load_steps=10 format=3 uid="uid://heavy_enemy_classic_scene_uid"]
+
+[ext_resource type="PackedScene" uid="uid://bt_enemy_scene_uid" path="res://scenes/characters/bt_enemy.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/characters/heavy_enemy.gd" id="2_script"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/find_player_target.gd" id="3_find"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/navigate_astar.gd" id="4_astar"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/sequence.gd" id="5_sequence"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/fire_weapons.gd" id="6_fire"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/simple_parallel.gd" id="7_parallel"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/composites/selector.gd" id="8_selector"]
+[ext_resource type="Script" path="res://scripts/ai/nodes/actions/always_running.gd" id="9_run"]
+
+[node name="HeavyEnemy" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+
+[node name="RootSelector" parent="BeehaveTree" index="0"]
+script = ExtResource("7_parallel")
+
+[node name="MoveSequence" type="Node" parent="BeehaveTree/RootSelector" index="0"]
+script = ExtResource("5_sequence")
+
+[node name="FindPlayerTarget" type="Node" parent="BeehaveTree/RootSelector/MoveSequence" index="0"]
+script = ExtResource("3_find")
+
+[node name="MovementSelector" type="Node" parent="BeehaveTree/RootSelector/MoveSequence" index="1"]
+script = ExtResource("8_selector")
+
+[node name="NavigateAStar" type="Node" parent="BeehaveTree/RootSelector/MoveSequence/MovementSelector" index="0"]
+script = ExtResource("4_astar")
+arrival_tolerance = 50.0
+
+[node name="AlwaysRunning" type="Node" parent="BeehaveTree/RootSelector/MoveSequence/MovementSelector" index="1"]
+script = ExtResource("9_run")
+
+[node name="FireWeapons" type="Node" parent="BeehaveTree/RootSelector" index="1"]
+script = ExtResource("6_fire")
+max_distance = 900.0

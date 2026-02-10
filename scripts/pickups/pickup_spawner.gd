@@ -4,17 +4,14 @@ class_name PickupSpawner
 
 @export var weapon_scenes: Array[PackedScene] = []
 @export var utility_scenes: Array[PackedScene] = []
-@export var health_count: int = 20
-@export var weapon_count: int = 20
-@export var utility_count: int = 10
+@export var health_count: int = 5
+@export var weapon_count: int = 5
+@export var utility_count: int = 5
 @export var gem_count: int = 3
 @export var extraction_scene: PackedScene
 
 func spawn_pickups(hex_map: Dictionary):
-	if not multiplayer.is_server():
-		return
-	
-	print("Spawning initial pickups...")
+	# print("Spawning initial pickups...")
 	var hex_keys = hex_map.keys()
 	if hex_keys.is_empty():
 		return
@@ -37,9 +34,9 @@ func spawn_pickups(hex_map: Dictionary):
 		ext.global_position = pos
 		ext.name = "ExtractionPoint"
 		pickups_node.add_child(ext, true)
-		print("Spawned Extraction Point at ", pos)
+		# print("Spawned Extraction Point at ", pos)
 
-	# Spawn Gems - Far from extraction and center and each other
+	# Spawn Remaining Gems - Far from extraction and center and each other
 	for i in range(gem_count):
 		var pos = _get_farthest_point(hex_map, existing_objectives, 20)
 		existing_objectives.append(pos)
@@ -63,7 +60,7 @@ func spawn_pickups(hex_map: Dictionary):
 		var hex = hex_map[coords]
 		var pos = hex.get_world_position()
 		var u_scene = utility_scenes[randi() % utility_scenes.size()]
-		_spawn_pickup("weapon", u_scene, pos, pickups_node)
+		_spawn_pickup("utility", u_scene, pos, pickups_node)
 		
 	# Spawn Health (Random)
 	for i in range(health_count):
@@ -113,6 +110,10 @@ func _spawn_pickup(type: String, scene: PackedScene, pos: Vector2, parent: Node)
 		temp.free()
 	elif type == "health":
 		pickup.pickup_name = "Health Kit"
+	elif type == "utility" and scene:
+		var temp = scene.instantiate()
+		pickup.pickup_name = temp.utility_name if "utility_name" in temp else "Utility"
+		temp.free()
 	elif type == "gem":
 		pickup.pickup_name = "Power Gem"
 		

@@ -1,6 +1,6 @@
 extends Node2D
 
-@export var weapon_name: String = "Jump Pack"
+@export var utility_name: String = "Jump Pack"
 @export var impulse_strength: float = 1200.0
 @export var cooldown: float = 2.0
 
@@ -31,7 +31,7 @@ func _apply_jump():
 		player.velocity = dir * impulse_strength
 		
 		# Visual effect
-		ParticleSpawner.spawn_death(global_position, Color(1, 0.8, 0), 5) # Small puff
+		ParticleSpawner.spawn_death(global_position, Color(1, 0.8, 0)) # Small puff
 		
 		can_use = false
 		_timer.start()

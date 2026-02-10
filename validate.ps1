@@ -1,4 +1,4 @@
-$godotExe = "C:\Users\alexa\Downloads\Godot_v4.6-stable_win64.exe\Godot_v4.6-stable_win64.exe" 
+$godotExe = "$PSScriptRoot\external\Godot_v4.4.1-stable_win64.exe"
 
 if (-not (Test-Path $godotExe)) {
     Write-Error "Godot executable not found at $godotExe"

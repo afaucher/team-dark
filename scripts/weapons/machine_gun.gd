@@ -29,34 +29,41 @@ func _ready():
 	_update_hud_status("READY")
 
 func _draw():
-	# Neon Vector Machine Gun Style
-	var barrel_length = 25.0
-	var barrel_width = 10.0
-	var color = Color(1.0, 0.5, 0.0, 1.0) # Orange HDR
+	# Premium Neon Vector Machine Gun
+	var barrel_length = 30.0
+	var barrel_width = 12.0
+	var color = Color(1.3, 0.7, 0.1, 1.0) # Amber HDR
 	
-	var points = PackedVector2Array([
+	# 1. Cooling Shroud (Background)
+	var shroud_points = PackedVector2Array([
 		Vector2(0, -barrel_width/2),
-		Vector2(barrel_length, -barrel_width/2),
-		Vector2(barrel_length, barrel_width/2),
+		Vector2(barrel_length-6, -barrel_width/2),
+		Vector2(barrel_length, -2),
+		Vector2(barrel_length, 2),
+		Vector2(barrel_length-6, barrel_width/2),
 		Vector2(0, barrel_width/2),
 		Vector2(0, -barrel_width/2)
 	])
 	
-	draw_polyline(points, color * Color(1, 1, 1, 0.3), 8.0)
-	draw_colored_polygon(points, Color.BLACK)
-	draw_polyline(points, color, 3.0)
-	# Muzzle
-	draw_rect(Rect2(barrel_length-4, -barrel_width/2-2, 6, barrel_width+4), color, false, 2.0)
-
-	# Ammo Bar (White)
+	draw_polyline(shroud_points, color * Color(1, 1, 1, 0.2), 12.0)
+	draw_colored_polygon(shroud_points, Color.BLACK)
+	draw_polyline(shroud_points, color, 2.5)
+	
+	# 2. Dual Barrels (Inside Shroud)
+	draw_line(Vector2(2, -3), Vector2(barrel_length-2, -3), color, 2.0)
+	draw_line(Vector2(2, 3), Vector2(barrel_length-2, 3), color, 2.0)
+	
+	# 3. Ammo Status
 	if not is_reloading:
 		var ammo_ratio = current_ammo / max_ammo
-		var bar_padding = 2.0
-		var bar_rect = Rect2(bar_padding, -barrel_width/2 + bar_padding, (barrel_length - bar_padding*2) * ammo_ratio, barrel_width - bar_padding*2)
-		draw_rect(bar_rect, Color.WHITE, true)
+		# Segmented ammo display
+		for i in range(10):
+			var segment_color = color if (float(i)/10.0 < ammo_ratio) else color * 0.2
+			draw_rect(Rect2(4 + i*2.2, -barrel_width/2 + 2, 1.5, 2), segment_color, true)
 	else:
-		# Show small red pulsing bar or empty
-		pass
+		# Reloading pulse
+		var p = (sin(Time.get_ticks_msec() * 0.01) + 1.0) * 0.5
+		draw_rect(Rect2(4, -barrel_width/2 + 2, barrel_length-8, 2), color * Color(1, 0.2, 0.2, p * 0.5), true)
 
 func trigger(just_pressed: bool, is_held: bool):
 	if is_reloading:
