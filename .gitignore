@@ -16,9 +16,14 @@ mono_crash.*.json
 Thumbs.db
 
 # Build and Env
-build/
+build*/
 python_gpu/
 ai_venv/
+gpu_venv/
 *.zip
 logs/
+screenshots/
+external/*.exe
+external/*.dll
+!external/steam_api64.dll # If you want to keep this, but scripts usually copy it
 !models/*.onnx

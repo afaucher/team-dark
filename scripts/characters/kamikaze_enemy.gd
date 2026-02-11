@@ -8,10 +8,10 @@ extends "res://scripts/characters/bt_enemy.gd"
 
 func _setup_logic():
 	super._setup_logic()
-	speed = 220.0
-	max_hp = 40.0
-	color_theme = Color.RED
-	
+	max_hp = 25.0
+	speed = 400.0
+	color_theme = ThemeManager.enemy_kamikaze
+	shape_type = "circle"
 func _physics_process(delta):
 	super._physics_process(delta)
 

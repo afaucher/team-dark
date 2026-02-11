@@ -1,6 +1,6 @@
-$godotExe = "C:\Users\alexa\Downloads\Godot_v4.6-stable_win64.exe\Godot_v4.6-stable_win64.exe"
+$godotExe = "external\Godot_v4.4.1-stable_win64.exe"
 $projectPath = "$PSScriptRoot"
-$scenePath = "scenes/test/test_screenshot_scene.tscn"
+$scenePath = "scenes/test/visual_audit.tscn"
 
 # Ensure screenshots directory exists in user:// or project root for visibility
 $screenshotDir = "$PSScriptRoot\docs\screenshots"

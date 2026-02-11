@@ -149,23 +149,24 @@ func _draw():
 	var radius = 24.0
 	var pulse = 1.0 + sin(Time.get_ticks_msec() * 0.005) * 0.05
 	var r = radius * pulse
+	var display_color = color_theme
 	
 	# Draw mount point indicators (below body)
 	for m in mounts:
 		if m and m.get_child_count() > 0:
-			draw_circle(m.position, 6.0, color_theme * Color(1,1,1,0.3))
+			draw_circle(m.position, 6.0, display_color * Color(1,1,1,0.3))
 			draw_circle(m.position, 4.0, Color.BLACK)
-			draw_circle(m.position, 2.0, color_theme)
-			draw_line(Vector2.ZERO, m.position, color_theme.darkened(0.5), 1.5)
+			draw_circle(m.position, 2.0, display_color)
+			draw_line(Vector2.ZERO, m.position, display_color.darkened(0.5), 1.5)
 	
 	# Glow backing
-	draw_circle(Vector2.ZERO, r + 4, color_theme * Color(1, 1, 1, 0.2))
+	draw_circle(Vector2.ZERO, r + 4, display_color * Color(1, 1, 1, 0.2))
 	
 	# Draw Shape based on tier
 	match tier:
 		Tier.EASY: # Circle
 			draw_circle(Vector2.ZERO, r - 2, Color.BLACK)
-			draw_arc(Vector2.ZERO, r, 0, TAU, 32, color_theme, 3.0, true)
+			draw_arc(Vector2.ZERO, r, 0, TAU, 32, display_color * 1.5, 3.0, true)
 		Tier.SCOUT: # Triangle
 			var points = PackedVector2Array([
 				Vector2(r, 0),

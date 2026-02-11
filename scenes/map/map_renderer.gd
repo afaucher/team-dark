@@ -3,13 +3,13 @@ extends Node2D
 const HexGrid = preload("res://scripts/hex_grid.gd")
 
 @export var map_generator: Node
-@export var base_color: Color = Color("#16213e") # Deep Blue (Neutral)
-@export var light_color: Color = Color("#4ecca3") # Lighter Teal/Green
-@export var dark_color: Color = Color.BLACK # Fade to black for depth
-@export var cliff_color: Color = Color("#e94560") # Red (for blocked edges visualization?) - optional
+@export var base_color: Color = Color("#050510") # ThemeManager.bg_void proxy
+@export var light_color: Color = Color("#7000FF") # ThemeManager.grid_main proxy
+@export var dark_color: Color = Color.BLACK 
+@export var cliff_color: Color = Color("#00FFFF") # ThemeManager.player_primary proxy for highlights
 
-@export var outline_color: Color = Color("#00fff5") # Cyan
-@export var outline_width: float = 2.0
+@export var outline_color: Color = Color("#00FFFF") 
+@export var outline_width: float = 1.5
 
 @onready var map_physics = $Physics
 
@@ -17,6 +17,11 @@ var current_baseline: float = 0.0
 var target_baseline: float = 0.0
 
 func _ready():
+	# Apply Theme
+	base_color = ThemeManager.bg_void
+	light_color = ThemeManager.grid_main.lightened(0.2)
+	outline_color = ThemeManager.player_primary
+	
 	if not map_generator:
 		map_generator = get_node_or_null("Generator")
 	

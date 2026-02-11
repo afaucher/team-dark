@@ -363,14 +363,13 @@ func _input(event):
 
 
 func _draw():
-	# Neon Vector Style via Procedural Glow
+	# Neon Vector Style via Centralized Theme
 	var radius = 32.0
-	# HDR Color boost (Values > 1.0 trigger strong glow)
-	var color_hdr = Color(0.0, 3.0, 3.0, 1.0) # Bright Cyan (Boosted G/B)
-	var color_base = Color("#00fff5")
+	var color_primary = ThemeManager.player_primary
+	var color_core = ThemeManager.player_core
 	
 	# 0. Mountpoint Indicators (Drawn FIRST so they are "under" the body)
-	var mount_color = Color(3.0, 0.0, 0.8, 1.0) # HDR Red/Pink
+	var mount_color = ThemeManager.enemy_tier_1 # Or unique mount color
 	for m in mounts:
 		if m and m.get_child_count() > 0:
 			# Glow backing
@@ -384,22 +383,22 @@ func _draw():
 	for i in range(5):
 		var halo_radius = radius + (i * 10.0) + 10.0
 		var alpha = 0.1 - (i * 0.02)
-		draw_circle(Vector2.ZERO, halo_radius, color_base * Color(1, 1, 1, alpha))
+		draw_circle(Vector2.ZERO, halo_radius, color_primary * Color(1, 1, 1, alpha))
 
 	# 2. Main Hollow Ring (Thick & Bright)
-	draw_arc(Vector2.ZERO, radius, 0, TAU, 64, color_hdr, 6.0, true)
+	draw_arc(Vector2.ZERO, radius, 0, TAU, 64, color_primary * 2.0, 6.0, true)
 	
 	# 3. Inner Black Fill (to cover map lines below)
 	draw_circle(Vector2.ZERO, radius - 3, Color.BLACK)
 	
 	# 4. Inner "Core" Ring (Thin, blinding white for extra pop)
-	draw_arc(Vector2.ZERO, radius, 0, TAU, 64, Color(2, 2, 2, 1), 2.0, true)
+	draw_arc(Vector2.ZERO, radius, 0, TAU, 64, color_core, 2.0, true)
 	
 	# Directional indicator (Wide arc further inside the body)
 	var indicator_radius = radius - 10.0
 	var arc_width = 3.0
-	var angle_span = deg_to_rad(45.0) # 3x wider than previous 15 deg
-	draw_arc(Vector2.ZERO, indicator_radius, -angle_span/2, angle_span/2, 32, color_hdr, arc_width, true)
+	var angle_span = deg_to_rad(45.0) 
+	draw_arc(Vector2.ZERO, indicator_radius, -angle_span/2, angle_span/2, 32, color_primary * 1.5, arc_width, true)
 
 	# Pickup Progress
 	for i in range(3):

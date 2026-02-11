@@ -73,9 +73,9 @@ func _input(event):
 		queue_redraw()
 
 func _draw():
-	# Neon Vector Style for Pellet
-	var core_color = Color(2.0, 2.0, 2.0, 1.0) # Over-bright White
-	var glow_color = Color(0.0, 1.5, 1.5, 1.0) # HDR Cyan
+	# Neon Vector Style via ThemeManager
+	var core_color = ThemeManager.player_core
+	var glow_color = ThemeManager.proj_pellet_glow
 	
 	# 1. Multi-layered Halo
 	for i in range(3):

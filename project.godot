@@ -23,6 +23,7 @@ ParticleSpawner="*res://scripts/effects/particle_spawner.gd"
 SteamManager="*res://scripts/steam_manager.gd"
 BeehaveGlobalMetrics="*res://addons/beehave/metrics/beehave_global_metrics.gd"
 BeehaveGlobalDebugger="*res://addons/beehave/debug/global_debugger.gd"
+ThemeManager="*res://scripts/theme_manager.gd"
 
 [display]
 

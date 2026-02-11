@@ -8,9 +8,9 @@ signal enemy_killed(attacker_id: int)
 
 @export var max_hp: float = 50.0
 @export var speed: float = 200.0
-@export var color_theme: Color = Color.RED
+@export var color_theme: Color = Color.WHITE
+@export var tier: int = 1
 @export var shape_type: String = "circle" # circle, triangle, square
-@export var player_id: int = 0
 
 var target_node: Node2D = null
 
@@ -19,6 +19,9 @@ var current_hp: float
 @onready var beehave_tree = $BeehaveTree
 
 func _ready():
+	if color_theme == Color.WHITE:
+		color_theme = ThemeManager.get_enemy_color(tier)
+		
 	current_hp = max_hp
 	add_to_group("enemies")
 	collision_layer = 4
@@ -32,6 +35,8 @@ func _ready():
 	queue_redraw()
 
 func _setup_logic():
+	if color_theme == Color.WHITE:
+		color_theme = ThemeManager.get_enemy_color(tier)
 	# Always equip for testing
 	_equip_random_loadout()
 
@@ -130,23 +135,24 @@ func _draw():
 	var radius = 24.0
 	var pulse = 1.0 + sin(Time.get_ticks_msec() * 0.005) * 0.05
 	var r = radius * pulse
+	var display_color = color_theme
 	
 	# Draw mount point indicators (below body)
 	for m in mounts:
 		if m and m.get_child_count() > 0:
-			draw_circle(m.position, 6.0, color_theme * Color(1,1,1,0.3))
+			draw_circle(m.position, 6.0, display_color * Color(1,1,1,0.3))
 			draw_circle(m.position, 4.0, Color.BLACK)
-			draw_circle(m.position, 2.0, color_theme)
-			draw_line(Vector2.ZERO, m.position, color_theme.darkened(0.5), 1.5)
+			draw_circle(m.position, 2.0, display_color)
+			draw_line(Vector2.ZERO, m.position, display_color.darkened(0.5), 1.5)
 	
 	# Glow backing
-	draw_circle(Vector2.ZERO, r + 4, color_theme * Color(1, 1, 1, 0.2))
+	draw_circle(Vector2.ZERO, r + 4, display_color * Color(1, 1, 1, 0.2))
 	
 	# Draw Shape
 	match shape_type:
 		"circle":
 			draw_circle(Vector2.ZERO, r - 2, Color.BLACK)
-			draw_arc(Vector2.ZERO, r, 0, TAU, 32, color_theme, 3.0, true)
+			draw_arc(Vector2.ZERO, r, 0, TAU, 32, display_color * 1.5, 3.0, true)
 		"triangle":
 			var points = PackedVector2Array([
 				Vector2(r, 0),

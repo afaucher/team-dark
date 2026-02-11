@@ -3,6 +3,8 @@ extends Node
 @export var delay_seconds: float = 1.0
 @export var output_path: String = "user://screenshots"
 
+@export var prefix: String = ""
+
 func _ready():
 	await get_tree().create_timer(delay_seconds).timeout
 	take_screenshot()
@@ -11,7 +13,7 @@ func _ready():
 func take_screenshot():
 	var image = get_viewport().get_texture().get_image()
 	var time = Time.get_datetime_dict_from_system()
-	var filename = "capture_%02d_%02d_%02d_%02d_%02d_%02d.png" % [time.year, time.month, time.day, time.hour, time.minute, time.second]
+	var filename = "%scapture_%02d_%02d_%02d_%02d_%02d_%02d.png" % [prefix, time.year, time.month, time.day, time.hour, time.minute, time.second]
 	
 	# Ensure directory exists (Godot user://)
 	var dir = DirAccess.open("user://")
